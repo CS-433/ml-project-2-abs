@@ -6,9 +6,9 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 
 
-class TrainSet(Dataset):
+class TrainValSet(Dataset):
 
-    def __init__(self, path, rotate=True, flip=True):
+    def __init__(self, path, set_type, ratio, rotate=True, flip=True):
         super(Dataset, self).__init__()
 
         # Get image and ground truth paths
@@ -20,12 +20,25 @@ class TrainSet(Dataset):
             for item in os.listdir(images_path)
             if item.endswith('.png')
         ]
+        self.images.sort()
 
         self.gt = [
             os.path.join(gt_path, item)
             for item in os.listdir(gt_path)
             if item.endswith('.png')
         ]
+        self.gt.sort()
+
+        # divide to validation and training set based on the value of set_type
+        idx = int(len(self.images) * ratio)
+        if set_type == 'train':
+            self.images = self.images[idx:]
+            self.gt = self.gt[idx:]
+        elif set_type == 'val':
+            self.images = self.images[:idx]
+            self.gt = self.gt[:idx]
+        else:
+            raise Exception("set_type is not correct")
 
         self.rotate = rotate
         self.flip = flip
@@ -66,7 +79,7 @@ class TrainSet(Dataset):
         # Apply dataset augmentation transforms if needed
         img, mask = self.transform(img, mask)
 
-        return img, mask
+        return img, mask.round().long()
 
     def __len__(self):
         return len(self.images)
@@ -110,7 +123,13 @@ class TestSet(Dataset):
 
 
 if __name__ == '__main__':
-    ds = TrainSet(path='./dataset')
+    ds = TrainValSet(path='./dataset', set_type='train', ratio=0.2)
+    ds = DataLoader(dataset=ds)
+    for img, mask in ds:
+        print(img.shape, mask.shape)
+    print(len(ds))
+
+    ds = TrainValSet(path='./dataset', set_type='val', ratio=0.2)
     ds = DataLoader(dataset=ds)
     for img, mask in ds:
         print(img.shape, mask.shape)
