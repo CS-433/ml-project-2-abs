@@ -30,7 +30,7 @@ def get_score(output, mask):
     mask_ = np.reshape(mask.cpu().numpy(), (mask.shape[0], -1))
     labels_ = np.reshape(labels.cpu().numpy(), (labels.shape[0], -1))
     # Calculating f1_score
-    f_score = f1_score(mask_, labels_, average='macro')
+    f_score = f1_score(mask_, labels_, average='macro', zero_division=0)
 
     return f_score
 
