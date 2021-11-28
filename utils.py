@@ -22,13 +22,24 @@ def create_folder(path):
         os.makedirs(path)
 
 
-def get_score(output, mask):
+# Dice loss derived from https://github.com/mateuszbuda/brain-segmentation-pytorch
+def dice_loss(output, mask, smooth=1.0):
+    output = output[:, 0].contiguous().view(-1)
+    mask = mask[:, 0].contiguous().view(-1)
+    intersection = (output * mask).sum()
+    dsc = (2. * intersection + smooth) / (
+            output.sum() + mask.sum() + smooth
+    )
+    return 1. - dsc
+
+
+def get_score(output, mask, threshold=0.5):
     """
     Calculate F1 score of the prediction
     """
-    labels = torch.argmax(output, dim=1)
+    labels_ = output > threshold
     mask_ = np.reshape(mask.cpu().numpy(), (mask.shape[0], -1))
-    labels_ = np.reshape(labels.cpu().numpy(), (labels.shape[0], -1))
+    labels_ = np.reshape(labels_.cpu().numpy(), (labels_.shape[0], -1))
     # Calculating f1_score
     f_score = f1_score(mask_, labels_, average='macro', zero_division=0)
 
@@ -46,9 +57,9 @@ def save_model(model, optimizer, path, args):
     }, save_path)
 
 
-def save_image(output, idx, path):
-    labels = torch.argmax(output, dim=1).squeeze().cpu().numpy()
-    img = Image.fromarray(labels.astype(np.uint8))
+def save_image(output, idx, path, threshold=0.5):
+    labels = (output > threshold).squeeze().cpu().numpy()
+    img = Image.fromarray((labels * 255).astype(np.uint8))
     img.save(os.path.join(path, 'satImage_{:03d}.png'.format(idx)))
 
 

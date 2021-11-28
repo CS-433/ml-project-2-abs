@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 import dataset
 from model import UNet
-from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track
+from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track, dice_loss
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', type=str, help="dataset path")
@@ -13,7 +13,7 @@ parser.add_argument('--validation_ratio', type=float, default=None,
 parser.add_argument('--rotate', type=bool, default=True, help="do rotate while training")
 parser.add_argument('--flip', type=bool, default=True, help="do flip while training")
 parser.add_argument('--resize', type=int, default=None, help="the resize value for test images")
-parser.add_argument('--batch_size', type=int, default=32, help="the batch size for the training")
+parser.add_argument('--batch_size', type=int, default=8, help="the batch size for the training")
 parser.add_argument('--cuda', type=int, default=1, help="0 or 1, if 1 then the model uses gpu for the training")
 parser.add_argument('--lr', type=float, default=0.001, help="the learning rate value")
 parser.add_argument('--weight_path', type=str, default=None,
@@ -21,7 +21,7 @@ parser.add_argument('--weight_path', type=str, default=None,
 parser.add_argument('--experiment_name', type=str, default="Road Segmentation", help="the name of the experiment")
 parser.add_argument('--train', type=bool, default=True, help="if true then training is done")
 parser.add_argument('--test', type=bool, default=True, help="if true then test is done")
-parser.add_argument('--epochs', type=int, default=1000, help="number of epoch")
+parser.add_argument('--epochs', type=int, default=100, help="number of epoch")
 parser.add_argument('--save_weights', type=bool, default=False, help="if true then the weights are saved in each epoch")
 
 
@@ -41,7 +41,7 @@ def main(args):
         val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=True)
 
     # Model initialization
-    model = UNet(n_channels=3, n_classes=2)
+    model = UNet(n_channels=3, n_classes=1)
     model = model.cuda() if args.cuda else model
     # Optimizer initialization
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, amsgrad=True)
@@ -55,8 +55,7 @@ def main(args):
     create_folder(experiment_path)
 
     # Loss function initialization
-    criterion = torch.nn.CrossEntropyLoss(reduction='mean')
-    criterion = criterion.cuda() if args.cuda else criterion
+    criterion = dice_loss
 
     if args.train:
         for epoch in range(args.epochs):
@@ -72,7 +71,7 @@ def main(args):
 
                 output = model(img)
 
-                loss = criterion(output.reshape(-1, 2), mask.reshape(-1))
+                loss = criterion(output, mask)
 
                 loss.backward()
                 optimizer.step()
@@ -97,7 +96,7 @@ def main(args):
                         mask = mask.cuda() if args.cuda else mask
 
                         output = model(img)
-                        loss = criterion(output.reshape(-1, 2), mask.reshape(-1))
+                        loss = criterion(output, mask)
                         f1_score = get_score(output, mask)
 
                         val_loss.append(loss.item())
