@@ -98,6 +98,7 @@ class TestSet(Dataset):
             for item in os.listdir(images_path)
             if os.path.isdir(os.path.join(images_path, item))
         ]
+        self.images.sort(key=lambda x: int(os.path.split(x)[-1][5:-4]))
 
         self.resize = resize
 

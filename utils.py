@@ -63,6 +63,15 @@ def save_image(output, idx, path, threshold=0.5):
     img.save(os.path.join(path, 'satImage_{:03d}.png'.format(idx)))
 
 
+def save_image_overlap(output, img, idx, path):
+    labels = (output > 0.5).cpu().numpy().squeeze()
+    img = img.cpu().numpy().squeeze() * 255
+    img[2, labels] = 150
+    img = np.transpose(img, (1, 2, 0)).astype('uint8')
+    img = Image.fromarray(img.astype(np.uint8), 'RGB')
+    img.save(os.path.join(path, 'satImage_overlap_{:03d}.png'.format(idx)))
+
+
 foreground_threshold = 0.25  # percentage of pixels > 1 required to assign a foreground label to a patch
 
 

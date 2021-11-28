@@ -4,7 +4,8 @@ import torch
 from torch.utils.data import DataLoader
 import dataset
 from model import UNet
-from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track, dice_loss
+from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track, \
+    dice_loss, save_image_overlap
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', type=str, help="dataset path")
@@ -124,6 +125,7 @@ def main(args):
                 output = model(img)
 
                 save_image(output, i + 1, results_path)
+                save_image_overlap(output, img, i + 1, results_path)
 
         submission_filename = os.path.join(results_path, args.experiment_name + '.csv')
         image_filenames = []
