@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 import dataset
 from model import UNet
-from utils import get_scores, load_model, create_folder, save_model, save_image, masks_to_submission, save_track
+from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', type=str, help="dataset path")
@@ -77,7 +77,7 @@ def main(args):
                 loss.backward()
                 optimizer.step()
 
-                f1_score = get_scores(output, mask)
+                f1_score = get_score(output, mask)
 
                 train_loss.append(loss.item())
                 train_f1.append(f1_score)
@@ -98,7 +98,7 @@ def main(args):
 
                         output = model(img)
                         loss = criterion(output.reshape(-1, 2), mask.reshape(-1))
-                        f1_score = get_scores(output, mask)
+                        f1_score = get_score(output, mask)
 
                         val_loss.append(loss.item())
                         val_f1.append(f1_score)
