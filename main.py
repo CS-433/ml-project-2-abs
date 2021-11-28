@@ -51,7 +51,7 @@ def main(args):
     # Scheduler initialization for reduction of learning rate during the training
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
 
-    experiment_path = './weights'
+    experiment_path = os.path.join('./experiments', args.experiment_name)
     create_folder(experiment_path)
 
     # Loss function initialization
