@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.image as mpimg
 import PIL.Image as Image
-from sklearn.metrics import f1_score, jaccard_score
+from sklearn.metrics import f1_score
 
 
 def load_model(model, optimizer, args):
@@ -95,9 +95,9 @@ def save_track(path, args, train_loss=None, train_f1=None, val_loss=None, val_f1
         cols['train']['f1-score'].append(train_f1)
 
     if val_loss:
-        cols['val']['loss'].append(train_loss)
+        cols['val']['loss'].append(val_loss)
     if val_f1:
-        cols['val']['f1-score'].append(train_f1)
+        cols['val']['f1-score'].append(val_f1)
 
     df = pd.DataFrame.from_dict(cols['train'])
     df.to_csv(os.path.join(path, args.experiment_name + "_train_tracking.csv"))
