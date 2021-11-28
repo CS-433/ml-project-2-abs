@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 import dataset
 from model import UNet
-from utils import get_scores, load_model, create_folder, save_model, save_image, masks_to_submission
+from utils import get_scores, load_model, create_folder, save_model, save_image, masks_to_submission, save_track
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', type=str, help="dataset path")
@@ -51,8 +51,8 @@ def main(args):
     # Scheduler initialization for reduction of learning rate during the training
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
 
-    weight_path = './weights'
-    create_folder(weight_path)
+    experiment_path = './weights'
+    create_folder(experiment_path)
 
     # Loss function initialization
     criterion = torch.nn.CrossEntropyLoss(reduction='mean')
@@ -60,7 +60,10 @@ def main(args):
 
     if args.train:
         for epoch in range(args.epochs):
+            # Training
             model.train()
+            train_loss = []
+            train_f1 = []
             for img, mask in train_loader:
                 img = img.cuda().float() if args.cuda else img.float()
                 mask = mask.cuda() if args.cuda else mask
@@ -74,12 +77,20 @@ def main(args):
                 loss.backward()
                 optimizer.step()
 
+                f1_score = get_scores(output, mask)
+
+                train_loss.append(loss.item())
+                train_f1.append(f1_score)
+
+            save_track(experiment_path, args,
+                       train_loss=sum(train_loss)/len(train_loss),
+                       train_f1=sum(train_f1)/len(train_f1))
+
             if args.validation_ratio:
                 # Validation
                 model.eval()
                 val_loss = []
                 val_f1 = []
-                val_iou = []
                 with torch.no_grad():
                     for img, mask in val_loader:
                         img = img.cuda().float() if args.cuda else img.float()
@@ -87,24 +98,24 @@ def main(args):
 
                         output = model(img)
                         loss = criterion(output.reshape(-1, 2), mask.reshape(-1))
-                        f1_score, iou = get_scores(output, mask)
+                        f1_score = get_scores(output, mask)
 
                         val_loss.append(loss.item())
                         val_f1.append(f1_score)
-                        val_iou.append(iou)
 
                 val_loss_to_track = sum(val_loss) / len(val_loss)
-                print('Loss = {:.4f}, F1 Score = {:.4f}, IoU = {:.4f}'.format(val_loss_to_track,
-                                                                              sum(val_f1) / len(val_f1),
-                                                                              sum(val_iou) / len(val_iou)))
+                val_f1_to_track = sum(val_f1) / len(val_f1)
+                print('Epoch : {} | Loss = {:.4f}, F1 Score = {:.4f}'.format(epoch, val_loss_to_track, val_f1_to_track))
+                save_track(experiment_path, args, val_loss=val_loss_to_track, val_f1=val_f1_to_track)
 
                 scheduler.step(val_loss_to_track)
 
             if args.save_weights:
-                save_model(model, optimizer, weight_path, args)
+                save_model(model, optimizer, experiment_path, args)
 
     if args.test:
-        results_path = os.path.join('./results', args.experiment_name)
+        # Testing
+        results_path = os.path.join(experiment_path, 'results')
         create_folder(results_path)
         model.eval()
         with torch.no_grad():

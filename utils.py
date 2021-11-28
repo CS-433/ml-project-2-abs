@@ -2,6 +2,7 @@ import os
 import re
 import torch
 import numpy as np
+import pandas as pd
 import matplotlib.image as mpimg
 import PIL.Image as Image
 from sklearn.metrics import f1_score, jaccard_score
@@ -21,19 +22,17 @@ def create_folder(path):
         os.makedirs(path)
 
 
-def get_scores(output, mask):
+def get_score(output, mask):
     """
-    Calculate different scores such as F1 score and IoU for the prediction
+    Calculate F1 score of the prediction
     """
     labels = torch.argmax(output, dim=1)
     mask_ = np.reshape(mask.cpu().numpy(), (mask.shape[0], -1))
     labels_ = np.reshape(labels.cpu().numpy(), (labels.shape[0], -1))
     # Calculating f1_score
     f_score = f1_score(mask_, labels_, average='macro')
-    # Calculating IoU score for segmentation
-    IoU = jaccard_score(mask_, labels_, average='macro')
 
-    return f_score, IoU
+    return f_score
 
 
 def save_model(model, optimizer, path, args):
@@ -83,3 +82,25 @@ def masks_to_submission(submission_filename, *image_filenames):
         f.write('id,prediction\n')
         for fn in image_filenames[0:]:
             f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))
+
+
+cols = {'train': {'loss': [], 'f1-score': []},
+        'val': {'loss': [], 'f1-score': []}}
+
+
+def save_track(path, args, train_loss=None, train_f1=None, val_loss=None, val_f1=None):
+    if train_loss:
+        cols['train']['loss'].append(train_loss)
+    if train_f1:
+        cols['train']['f1-score'].append(train_f1)
+
+    if val_loss:
+        cols['val']['loss'].append(train_loss)
+    if val_f1:
+        cols['val']['f1-score'].append(train_f1)
+
+    df = pd.DataFrame.from_dict(cols['train'])
+    df.to_csv(os.path.join(path, args.experiment_name + "_train_tracking.csv"))
+
+    df = pd.DataFrame.from_dict(cols['val'])
+    df.to_csv(os.path.join(path, args.experiment_name + "_val_tracking.csv"))
