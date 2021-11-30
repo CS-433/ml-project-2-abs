@@ -17,9 +17,15 @@ def load_model(model, optimizer, args):
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 
-def create_folder(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
+def save_model(model, optimizer, path, args):
+    """
+    Saves the model and the optimizer states
+    """
+    save_path = os.path.join(path, args.experiment_name + '.pt')
+    torch.save({
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+    }, save_path)
 
 
 # Dice loss derived from https://github.com/mateuszbuda/brain-segmentation-pytorch
@@ -33,6 +39,15 @@ def dice_loss(output, mask, smooth=1.0):
     return 1. - dsc
 
 
+def fgsm_update(img, data_grad, update_max_norm=0.25):
+    return img + update_max_norm * torch.sign(data_grad)
+
+
+def create_folder(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
 def get_score(output, mask, threshold=0.5):
     """
     Calculate F1 score of the prediction
@@ -44,17 +59,6 @@ def get_score(output, mask, threshold=0.5):
     f_score = f1_score(mask_, labels_, average='macro', zero_division=0)
 
     return f_score
-
-
-def save_model(model, optimizer, path, args):
-    """
-    Saves the model and the optimizer states
-    """
-    save_path = os.path.join(path, args.experiment_name + '.pt')
-    torch.save({
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
-    }, save_path)
 
 
 def save_image(output, idx, path, threshold=0.5):

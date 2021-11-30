@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import dataset
 from model import UNet
 from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track, \
-    dice_loss, save_image_overlap
+    dice_loss, save_image_overlap, fgsm_update
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', type=str, help="dataset path")
@@ -24,6 +24,8 @@ parser.add_argument('--train', type=bool, default=True, help="if true then train
 parser.add_argument('--test', type=bool, default=True, help="if true then test is done")
 parser.add_argument('--epochs', type=int, default=100, help="number of epoch")
 parser.add_argument('--save_weights', type=bool, default=False, help="if true then the weights are saved in each epoch")
+parser.add_argument('--adversarial', type=bool, default=True,
+                    help="if true then the training is done using adversarial data")
 
 
 def main(args):
@@ -70,8 +72,18 @@ def main(args):
 
                 optimizer.zero_grad()
 
-                output = model(img)
+                if args.adversarial:
+                    img.requires_grad = True
 
+                    output = model(img)
+                    loss = criterion(output, mask)
+
+                    model.zero_grad()
+                    loss.backward()
+
+                    img = fgsm_update(img, img.grad)
+
+                output = model(img)
                 loss = criterion(output, mask)
 
                 loss.backward()
@@ -83,8 +95,8 @@ def main(args):
                 train_f1.append(f1_score)
 
             save_track(experiment_path, args,
-                       train_loss=sum(train_loss)/len(train_loss),
-                       train_f1=sum(train_f1)/len(train_f1))
+                       train_loss=sum(train_loss) / len(train_loss),
+                       train_f1=sum(train_f1) / len(train_f1))
 
             if args.validation_ratio:
                 # Validation
