@@ -40,7 +40,7 @@ def dice_loss(output, mask, smooth=1.0):
 
 
 def fgsm_update(img, data_grad, update_max_norm=0.25):
-    return img + update_max_norm * torch.sign(data_grad)
+    return torch.clamp(img + update_max_norm * torch.sign(data_grad), min=0, max=1)
 
 
 def create_folder(path):

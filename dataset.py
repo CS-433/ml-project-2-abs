@@ -49,7 +49,7 @@ class TrainValSet(Dataset):
         """
 
         # Do a vertical or horizontal flip randomly
-        if self.flip and random.random() > 0.5:
+        if self.flip and random.random() > 0.33:
             if random.random() > 0.5:
                 img = TF.hflip(img)
                 mask = TF.hflip(mask)

@@ -24,23 +24,21 @@ parser.add_argument('--train', type=bool, default=True, help="if true then train
 parser.add_argument('--test', type=bool, default=True, help="if true then test is done")
 parser.add_argument('--epochs', type=int, default=100, help="number of epoch")
 parser.add_argument('--save_weights', type=bool, default=False, help="if true then the weights are saved in each epoch")
-parser.add_argument('--adversarial', type=bool, default=True,
+parser.add_argument('--adversarial', type=bool, default=False,
                     help="if true then the training is done using adversarial data")
 
 
 def main(args):
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
-    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate,
-                                        flip=args.flip)
+    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip)
     test_dataset = dataset.TestSet(path=args.path, resize=args.resize)
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False)
 
     if args.validation_ratio:
-        val_dataset = dataset.TrainValSet(path=args.path, set_type='val', ratio=ratio, rotate=args.rotate,
-                                          flip=args.flip)
+        val_dataset = dataset.TrainValSet(path=args.path, set_type='val', ratio=ratio, rotate=args.rotate, flip=args.flip)
         val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=True)
 
     # Model initialization
