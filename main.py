@@ -50,7 +50,7 @@ def main(args):
     if args.weight_path:
         load_model(model, optimizer, args)
     # Scheduler initialization for reduction of learning rate during the training
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, min_lr=1e-7)
 
     experiment_path = os.path.join('./experiments', args.experiment_name)
     create_folder(experiment_path)
