@@ -24,8 +24,8 @@ parser.add_argument('--train', type=bool, default=True, help="if true then train
 parser.add_argument('--test', type=bool, default=True, help="if true then test is done")
 parser.add_argument('--epochs', type=int, default=100, help="number of epoch")
 parser.add_argument('--save_weights', type=bool, default=False, help="if true then the weights are saved in each epoch")
-parser.add_argument('--adversarial', type=bool, default=False,
-                    help="if true then the training is done using adversarial data")
+parser.add_argument('--adversarial_bound', type=int, default=0,
+                    help="if non-zero then the training is done using adversarial attack, where epsilon is the given value")
 
 
 def main(args):
@@ -70,7 +70,7 @@ def main(args):
 
                 optimizer.zero_grad()
 
-                if args.adversarial:
+                if args.adversarial != 0:
                     img.requires_grad = True
 
                     output = model(img)
@@ -79,7 +79,7 @@ def main(args):
                     model.zero_grad()
                     loss.backward()
 
-                    img = fgsm_update(img, img.grad)
+                    img = fgsm_update(img, output, mask, update_max_norm=args.adversarial)
 
                 output = model(img)
                 loss = criterion(output, mask)
