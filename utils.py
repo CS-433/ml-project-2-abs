@@ -115,14 +115,14 @@ cols = {'train': {'loss': [], 'f1-score': []},
 
 
 def save_track(path, args, train_loss=None, train_f1=None, val_loss=None, val_f1=None):
-    if train_loss:
+    if train_loss is not None:
         cols['train']['loss'].append(train_loss)
-    if train_f1:
+    if train_f1 is not None:
         cols['train']['f1-score'].append(train_f1)
 
-    if val_loss:
+    if val_loss is not None:
         cols['val']['loss'].append(val_loss)
-    if val_f1:
+    if val_f1 is not None:
         cols['val']['f1-score'].append(val_f1)
 
     df = pd.DataFrame.from_dict(cols['train'])
