@@ -24,6 +24,8 @@ parser.add_argument('--train', type=bool, default=True, help="if true then train
 parser.add_argument('--test', type=bool, default=True, help="if true then test is done")
 parser.add_argument('--epochs', type=int, default=100, help="number of epoch")
 parser.add_argument('--save_weights', type=bool, default=False, help="if true then the weights are saved in each epoch")
+parser.add_argument('--loss', type=str, default="dice",
+                    help="selects the loss type. the accepted values are \"dice\", \"cross entropy\" and \"dice + cross entropy\"")
 parser.add_argument('--adversarial_bound', type=float, default=0,
                     help="if non-zero then the training is done using adversarial attack, where epsilon is the given value")
 
@@ -56,7 +58,17 @@ def main(args):
     create_folder(experiment_path)
 
     # Loss function initialization
-    criterion = dice_loss
+    if args.loss == 'dice':
+        criterion = dice_loss
+    elif args.loss == 'cross entropy':
+        criterion = torch.nn.BCELoss(reduction='mean')
+        criterion = criterion.cuda() if args.cuda else criterion
+    elif args.loss == 'dice + cross entropy':
+        ce = torch.nn.BCELoss(reduction='mean')
+        ce = ce.cuda() if args.cuda else ce
+        criterion = lambda output_, mask_: ce(output_, mask_) + dice_loss(output_, mask_)
+    else:
+        raise Exception("the give loss value is not defined")
 
     if args.train:
         for epoch in range(args.epochs):
