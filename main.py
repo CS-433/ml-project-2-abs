@@ -70,7 +70,7 @@ def main(args):
 
                 optimizer.zero_grad()
 
-                if args.adversarial != 0:
+                if args.adversarial_bound != 0:
                     img.requires_grad = True
 
                     output = model(img)
@@ -79,7 +79,7 @@ def main(args):
                     model.zero_grad()
                     loss.backward()
 
-                    img = fgsm_update(img, output, mask, update_max_norm=args.adversarial)
+                    img = fgsm_update(img, output, mask, update_max_norm=args.adversarial_bound)
 
                 output = model(img)
                 loss = criterion(output, mask)
