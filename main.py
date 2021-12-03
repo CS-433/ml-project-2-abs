@@ -1,9 +1,10 @@
 import argparse
 import os
 import torch
-from torch.utils.data import DataLoader
 import dataset
 from model import UNet
+from torch.utils.data import DataLoader
+import torchvision.transforms.functional as TF
 from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track, \
     dice_loss, save_image_overlap, fgsm_update
 
@@ -28,6 +29,8 @@ parser.add_argument('--loss', type=str, default="dice",
                     help="selects the loss type. the accepted values are \"dice\", \"cross entropy\" and \"dice + cross entropy\"")
 parser.add_argument('--adversarial_bound', type=float, default=0,
                     help="if non-zero then the training is done using adversarial attack, where epsilon is the given value")
+parser.add_argument('--mask_blur_sigma', type=float, default=0,
+                    help="the initial sigma value of gaussian blur filter applied on the mask. if zero then there will be no filter")
 
 
 def main(args):
@@ -71,6 +74,7 @@ def main(args):
         raise Exception("the give loss value is not defined")
 
     if args.train:
+        sigma = args.mask_blur_sigma
         for epoch in range(args.epochs):
             # Training
             model.train()
@@ -79,6 +83,9 @@ def main(args):
             for img, mask in train_loader:
                 img = img.cuda().float() if args.cuda else img.float()
                 mask = mask.cuda() if args.cuda else mask
+                if sigma > 1e-07:
+                    mask = TF.gaussian_blur(mask, 20, [sigma, sigma])
+                    mask = torch.clamp(mask, min=0, max=1)
 
                 optimizer.zero_grad()
 
@@ -103,6 +110,9 @@ def main(args):
 
                 train_loss.append(loss.item())
                 train_f1.append(f1_score)
+
+            if sigma > 1e-07 and (epoch+1) % 3 == 0:
+                sigma /= 2
 
             save_track(experiment_path, args,
                        train_loss=sum(train_loss) / len(train_loss),
