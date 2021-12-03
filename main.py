@@ -84,7 +84,7 @@ def main(args):
                 img = img.cuda().float() if args.cuda else img.float()
                 mask = mask.cuda() if args.cuda else mask
                 if sigma > 1e-07:
-                    mask = TF.gaussian_blur(mask, 20, [sigma, sigma])
+                    mask = TF.gaussian_blur(mask, 17, [sigma, sigma])
                     mask = torch.clamp(mask, min=0, max=1)
 
                 optimizer.zero_grad()
