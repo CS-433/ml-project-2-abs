@@ -60,7 +60,7 @@ class TrainValSet(Dataset):
 
         # Do a random rotate
         if self.rotate:
-            angle = random.choice([0, 90, 180, 270])
+            angle = random.choice([0, 45, 90, 135, 180, 225, 270, 315])
             img = TF.rotate(img, angle)
             mask = TF.rotate(mask, angle)
 
