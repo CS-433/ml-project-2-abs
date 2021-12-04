@@ -8,7 +8,7 @@ from PIL import Image
 
 class TrainValSet(Dataset):
 
-    def __init__(self, path, set_type, ratio, rotate=True, flip=True):
+    def __init__(self, path, set_type, ratio, rotate=True, flip=True, blur=True):
         super(Dataset, self).__init__()
 
         # Get image and ground truth paths
@@ -42,6 +42,7 @@ class TrainValSet(Dataset):
 
         self.rotate = rotate
         self.flip = flip
+        self.blur = blur
 
     def transform(self, img, mask):
         """
@@ -62,6 +63,9 @@ class TrainValSet(Dataset):
             angle = random.choice([0, 90, 180, 270])
             img = TF.rotate(img, angle)
             mask = TF.rotate(mask, angle)
+
+        if self.blur and random.random() > 0.8:
+            img = TF.gaussian_blur(img, 5, [0.5, 0.5])
 
         to_tensor = transforms.ToTensor()
 

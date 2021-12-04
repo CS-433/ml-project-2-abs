@@ -14,6 +14,7 @@ parser.add_argument('--validation_ratio', type=float, default=None,
                     help="the ratio of validation dataset size to the whole dataset. if not set then there will be no validation and the whole dataset is used for training")
 parser.add_argument('--rotate', type=bool, default=True, help="do rotate while training")
 parser.add_argument('--flip', type=bool, default=True, help="do flip while training")
+parser.add_argument('--blur', type=bool, default=True, help="do image blur while training")
 parser.add_argument('--resize', type=int, default=None, help="the resize value for test images")
 parser.add_argument('--batch_size', type=int, default=8, help="the batch size for the training")
 parser.add_argument('--cuda', type=int, default=1, help="0 or 1, if 1 then the model uses gpu for the training")
@@ -36,14 +37,14 @@ parser.add_argument('--mask_blur_sigma', type=float, default=0,
 def main(args):
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
-    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip)
+    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip, blur=args.blur)
     test_dataset = dataset.TestSet(path=args.path, resize=args.resize)
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False)
 
     if args.validation_ratio:
-        val_dataset = dataset.TrainValSet(path=args.path, set_type='val', ratio=ratio, rotate=args.rotate, flip=args.flip)
+        val_dataset = dataset.TrainValSet(path=args.path, set_type='val', ratio=ratio, rotate=args.rotate, flip=args.flip, blur=args.blur)
         val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=True)
 
     # Model initialization
