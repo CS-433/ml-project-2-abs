@@ -40,6 +40,7 @@ class TrainValSet(Dataset):
         else:
             raise Exception("set_type is not correct")
 
+        self.set_type = set_type
         self.rotate = rotate
         self.flip = flip
         self.blur = blur
@@ -60,7 +61,10 @@ class TrainValSet(Dataset):
 
         # Do a random rotate
         if self.rotate:
-            angle = random.choice([0, 45, 90, 135, 180, 225, 270, 315])
+            if self.set_type == 'train':
+                angle = random.choice([0, 45, 90, 135, 180, 270])
+            else:
+                angle = random.choice([0, 90, 180, 270])
             img = TF.rotate(img, angle)
             mask = TF.rotate(mask, angle)
 
