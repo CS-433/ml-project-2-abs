@@ -4,7 +4,6 @@ import torch
 import dataset
 from model import UNet
 from torch.utils.data import DataLoader
-import torchvision.transforms.functional as TF
 from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track, \
     dice_loss, save_image_overlap, fgsm_update
 
@@ -14,7 +13,6 @@ parser.add_argument('--validation_ratio', type=float, default=None,
                     help="the ratio of validation dataset size to the whole dataset. if not set then there will be no validation and the whole dataset is used for training")
 parser.add_argument('--rotate', type=bool, default=True, help="do rotate while training")
 parser.add_argument('--flip', type=bool, default=True, help="do flip while training")
-parser.add_argument('--blur', type=bool, default=True, help="do image blur while training")
 parser.add_argument('--resize', type=int, default=None, help="the resize value for test images")
 parser.add_argument('--batch_size', type=int, default=8, help="the batch size for the training")
 parser.add_argument('--cuda', type=int, default=1, help="0 or 1, if 1 then the model uses gpu for the training")
@@ -30,21 +28,19 @@ parser.add_argument('--loss', type=str, default="dice",
                     help="selects the loss type. the accepted values are \"dice\", \"cross entropy\" and \"dice + cross entropy\"")
 parser.add_argument('--adversarial_bound', type=float, default=0,
                     help="if non-zero then the training is done using adversarial attack, where epsilon is the given value")
-parser.add_argument('--mask_blur_sigma', type=float, default=0,
-                    help="the initial sigma value of gaussian blur filter applied on the mask. if zero then there will be no filter")
 
 
 def main(args):
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
-    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip, blur=args.blur)
+    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip)
     test_dataset = dataset.TestSet(path=args.path, resize=args.resize)
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False)
 
     if args.validation_ratio:
-        val_dataset = dataset.TrainValSet(path=args.path, set_type='val', ratio=ratio, rotate=args.rotate, flip=args.flip, blur=args.blur)
+        val_dataset = dataset.TrainValSet(path=args.path, set_type='val', ratio=ratio, rotate=args.rotate, flip=args.flip)
         val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=True)
 
     # Model initialization
@@ -75,7 +71,6 @@ def main(args):
         raise Exception("the give loss value is not defined")
 
     if args.train:
-        sigma = args.mask_blur_sigma
         for epoch in range(args.epochs):
             # Training
             model.train()
@@ -84,9 +79,6 @@ def main(args):
             for img, mask in train_loader:
                 img = img.cuda().float() if args.cuda else img.float()
                 mask = mask.cuda() if args.cuda else mask
-                if sigma > 1e-07:
-                    mask = TF.gaussian_blur(mask, 17, [sigma, sigma])
-                    mask = torch.clamp(mask, min=0, max=1)
 
                 optimizer.zero_grad()
 
@@ -111,9 +103,6 @@ def main(args):
 
                 train_loss.append(loss.item())
                 train_f1.append(f1_score)
-
-            if sigma > 1e-07 and (epoch+1) % 3 == 0:
-                sigma /= 2
 
             save_track(experiment_path, args,
                        train_loss=sum(train_loss) / len(train_loss),
