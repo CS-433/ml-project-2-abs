@@ -100,7 +100,7 @@ def main(args):
                 output = model(img)
                 loss = criterion(output, mask)
                 if args.loss_weight:
-                    loss += dice_loss(output*diag_mask, diag_mask)
+                    loss += args.loss_weight*dice_loss(output*diag_mask, diag_mask)
 
                 loss.backward()
                 optimizer.step()
