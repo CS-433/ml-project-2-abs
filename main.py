@@ -26,6 +26,8 @@ parser.add_argument('--epochs', type=int, default=100, help="number of epoch")
 parser.add_argument('--save_weights', type=bool, default=False, help="if true then the weights are saved in each epoch")
 parser.add_argument('--loss', type=str, default="dice",
                     help="selects the loss type. the accepted values are \"dice\", \"cross entropy\" and \"dice + cross entropy\"")
+parser.add_argument('--loss_weight', type=float, default=0,
+                    help="if non-zero then an extra weighed loss is calculated for non-vertical-horizontal pixels in mask using the given value as the weight")
 parser.add_argument('--adversarial_bound', type=float, default=0,
                     help="if non-zero then the training is done using adversarial attack, where epsilon is the given value")
 
@@ -33,7 +35,7 @@ parser.add_argument('--adversarial_bound', type=float, default=0,
 def main(args):
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
-    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip)
+    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip, diag_mask=args.loss_weight != 0)
     test_dataset = dataset.TestSet(path=args.path, resize=args.resize)
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
@@ -76,9 +78,11 @@ def main(args):
             model.train()
             train_loss = []
             train_f1 = []
-            for img, mask in train_loader:
+            for img, mask, diag_mask in train_loader:
                 img = img.cuda().float() if args.cuda else img.float()
                 mask = mask.cuda() if args.cuda else mask
+                if args.loss_weight:
+                    diag_mask = diag_mask.cuda() if args.cuda else diag_mask
 
                 optimizer.zero_grad()
 
@@ -95,6 +99,8 @@ def main(args):
 
                 output = model(img)
                 loss = criterion(output, mask)
+                if args.loss_weight:
+                    loss += dice_loss(output*diag_mask, diag_mask)
 
                 loss.backward()
                 optimizer.step()

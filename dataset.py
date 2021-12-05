@@ -4,11 +4,30 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import transforms
 import torchvision.transforms.functional as TF
 from PIL import Image
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def get_diag_mask(mask):
+    diag_mask = np.asarray(mask.copy())
+
+    hs = cv2.getStructuringElement(cv2.MORPH_RECT, (diag_mask.shape[1], 1))
+    horizontal = cv2.erode(diag_mask, hs)
+    horizontal = cv2.dilate(horizontal, hs)
+
+    vs = cv2.getStructuringElement(cv2.MORPH_RECT, (1, diag_mask.shape[0]))
+    vertical = cv2.erode(diag_mask, vs)
+    vertical = cv2.dilate(vertical, vs)
+
+    diag_mask = diag_mask - np.clip(vertical + horizontal, a_min=0, a_max=255)
+
+    return diag_mask
 
 
 class TrainValSet(Dataset):
 
-    def __init__(self, path, set_type, ratio, rotate=True, flip=True):
+    def __init__(self, path, set_type, ratio, rotate=True, flip=True, diag_mask=True):
         super(Dataset, self).__init__()
 
         # Get image and ground truth paths
@@ -43,6 +62,7 @@ class TrainValSet(Dataset):
         self.set_type = set_type
         self.rotate = rotate
         self.flip = flip
+        self.diag_mask = diag_mask
 
     def transform(self, img, mask):
         """
@@ -66,9 +86,14 @@ class TrainValSet(Dataset):
 
         to_tensor = transforms.ToTensor()
 
+        diag_mask = None
+        if self.diag_mask and self.set_type == 'train':
+            diag_mask = get_diag_mask(mask)
+            diag_mask = to_tensor(diag_mask).round().long()
+
         img, mask = to_tensor(img), to_tensor(mask)
 
-        return img, mask
+        return img, mask.round().long(), diag_mask
 
     def __getitem__(self, index):
         img, mask = self.images[index], self.gt[index]
@@ -78,9 +103,11 @@ class TrainValSet(Dataset):
         mask = Image.open(mask)
 
         # Apply dataset augmentation transforms if needed
-        img, mask = self.transform(img, mask)
+        img, mask, diag_mask = self.transform(img, mask)
 
-        return img, mask.round().long()
+        if self.set_type == 'train':
+            return img, mask, diag_mask
+        return img, mask
 
     def __len__(self):
         return len(self.images)
@@ -127,8 +154,8 @@ class TestSet(Dataset):
 if __name__ == '__main__':
     ds = TrainValSet(path='./dataset', set_type='train', ratio=0.2)
     ds = DataLoader(dataset=ds)
-    for img, mask in ds:
-        print(img.shape, mask.shape)
+    for img, mask, diag_mask in ds:
+        print(img.shape, mask.shape, diag_mask.shape)
     print(len(ds))
 
     ds = TrainValSet(path='./dataset', set_type='val', ratio=0.2)
