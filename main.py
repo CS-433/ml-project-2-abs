@@ -137,6 +137,8 @@ def main(args):
                 save_track(experiment_path, args, val_loss=val_loss_to_track, val_f1=val_f1_to_track)
 
                 scheduler.step(val_loss_to_track)
+            else:
+                print("Epoch : {} | No validation".format(epoch))
 
             if args.save_weights:
                 save_model(model, optimizer, experiment_path, args)
