@@ -6,7 +6,6 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def get_diag_mask(mask):

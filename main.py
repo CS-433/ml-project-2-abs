@@ -100,7 +100,8 @@ def main(args):
                 output = model(img)
                 loss = criterion(output, mask)
                 if args.loss_weight:
-                    loss += args.loss_weight*dice_loss(output*diag_mask, diag_mask)
+                    idx = 1 - torch.clamp(mask - diag_mask, min=0, max=1)
+                    loss += args.loss_weight * dice_loss(output * idx, diag_mask)
 
                 loss.backward()
                 optimizer.step()
