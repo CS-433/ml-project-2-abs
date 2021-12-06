@@ -1,5 +1,7 @@
 import os
 import random
+
+import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import transforms
 import torchvision.transforms.functional as TF
@@ -85,7 +87,7 @@ class TrainValSet(Dataset):
 
         to_tensor = transforms.ToTensor()
 
-        diag_mask = None
+        diag_mask = -1
         if self.diag_mask and self.set_type == 'train':
             diag_mask = get_diag_mask(mask)
             diag_mask = to_tensor(diag_mask).round().long()
