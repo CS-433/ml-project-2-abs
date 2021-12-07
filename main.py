@@ -2,13 +2,14 @@ import argparse
 import os
 import torch
 import dataset
-from model import UNet
+from model import UNet, WNet
 from torch.utils.data import DataLoader
 from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track, \
     dice_loss, save_image_overlap, fgsm_update
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', type=str, help="dataset path")
+parser.add_argument('--model', type=str, default="UNet", help="selects the model. Acceptable values: \"UNet\", \"WNet\"")
 parser.add_argument('--validation_ratio', type=float, default=None,
                     help="the ratio of validation dataset size to the whole dataset. if not set then there will be no validation and the whole dataset is used for training")
 parser.add_argument('--rotate', type=bool, default=True, help="do rotate while training")
@@ -46,7 +47,12 @@ def main(args):
         val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=True)
 
     # Model initialization
-    model = UNet(n_channels=3, n_classes=1)
+    if args.model == 'UNet':
+        model = UNet(n_channels=3, n_classes=1)
+    elif args.model == 'WNet':
+        model = WNet(n_channels=3, n_classes=1)
+    else:
+        raise Exception("The given model does not exist.")
     model = model.cuda() if args.cuda else model
     # Optimizer initialization
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, amsgrad=True)
@@ -70,7 +76,7 @@ def main(args):
         ce = ce.cuda() if args.cuda else ce
         criterion = lambda output_, mask_: ce(output_, mask_) + dice_loss(output_, mask_)
     else:
-        raise Exception("the give loss value is not defined")
+        raise Exception("The given loss function does not exist.")
 
     if args.train:
         for epoch in range(args.epochs):
