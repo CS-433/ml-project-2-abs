@@ -86,6 +86,7 @@ class TrainValSet(Dataset):
 
         if self.resize:
             img = TF.resize(img, self.resize)
+            mask = TF.resize(mask, self.resize)
 
         to_tensor = transforms.ToTensor()
 
