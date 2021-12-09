@@ -37,8 +37,8 @@ parser.add_argument('--adversarial_bound', type=float, default=0,
 def main(args):
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
-    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip, diag_mask=args.loss_weight != 0)
-    test_dataset = dataset.TestSet(path=args.path, resize=args.resize)
+    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip, resize=args.resize, diag_mask=args.loss_weight != 0)
+    test_dataset = dataset.TestSet(path=args.path)
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False)
