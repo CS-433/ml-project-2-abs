@@ -1,7 +1,5 @@
 import os
 import random
-
-import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import transforms
 import torchvision.transforms.functional as TF
@@ -28,7 +26,7 @@ def get_diag_mask(mask):
 
 class TrainValSet(Dataset):
 
-    def __init__(self, path, set_type, ratio, rotate=True, flip=True, diag_mask=True):
+    def __init__(self, path, set_type, ratio, rotate=True, flip=True, resize=None, diag_mask=True):
         super(Dataset, self).__init__()
 
         # Get image and ground truth paths
@@ -63,11 +61,12 @@ class TrainValSet(Dataset):
         self.set_type = set_type
         self.rotate = rotate
         self.flip = flip
+        self.resize = resize
         self.diag_mask = diag_mask
 
     def transform(self, img, mask):
         """
-        Augmenting the dataset by doing random flip or random rotate
+        Augmenting the dataset by doing random flip or random rotate and justify dataset by resizing
         """
 
         # Do a vertical or horizontal flip randomly
@@ -84,6 +83,9 @@ class TrainValSet(Dataset):
             angle = random.choice([0, 90, 180, 270])
             img = TF.rotate(img, angle)
             mask = TF.rotate(mask, angle)
+
+        if self.resize:
+            img = TF.resize(img, self.resize)
 
         to_tensor = transforms.ToTensor()
 
@@ -116,7 +118,7 @@ class TrainValSet(Dataset):
 
 class TestSet(Dataset):
 
-    def __init__(self, path, resize=None):
+    def __init__(self, path):
         super(Dataset, self).__init__()
 
         # Get image and ground truth paths
@@ -129,22 +131,10 @@ class TestSet(Dataset):
         ]
         self.images.sort(key=lambda x: int(os.path.split(x)[-1][5:-4]))
 
-        self.resize = resize
-
-    def transform(self, img):
-        """
-        Resize the image if needed
-        """
-        if self.resize:
-            img = TF.resize(img, self.resize)
-        img = transforms.ToTensor()(img)
-
-        return img
-
     def __getitem__(self, index):
         img = self.images[index]
         img = Image.open(img)
-        img = self.transform(img)
+        img = transforms.ToTensor()(img)
 
         return img
 
