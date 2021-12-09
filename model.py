@@ -73,7 +73,8 @@ class UNet(nn.Module):
 
     @staticmethod
     def res_block(in_channels, features, name):
-        return OrderedDict(
+        return nn.Sequential(
+            OrderedDict(
                 [
                     (
                         name + "resblock",
@@ -81,6 +82,7 @@ class UNet(nn.Module):
                     )
                 ]
             )
+        )
 
     @staticmethod
     def _block(in_channels, features, name):
