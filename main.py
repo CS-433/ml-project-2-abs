@@ -50,6 +50,8 @@ def main(args):
     # Model initialization
     if args.model == 'UNet':
         model = UNet(n_channels=3, n_classes=1)
+    elif args.model == 'UNet_Res':
+        model = UNet(n_channels=3, n_classes=1, backbone='resnet')
     elif args.model == 'WNet0404':
         model = WNet0404(n_channels=3, n_classes=1)
     elif args.model == 'WNet0402':

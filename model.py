@@ -1,43 +1,49 @@
 import torch
 import torch.nn as nn
 from collections import OrderedDict
+from torchvision.models.resnet import BasicBlock
 
 
 # Unet model derived from https://github.com/mateuszbuda/brain-segmentation-pytorch
 
 class UNet(nn.Module):
 
-    def __init__(self, n_channels=3, n_classes=1, init_features=32):
+    def __init__(self, n_channels=3, n_classes=1, init_features=32, backbone="unet"):
         super(UNet, self).__init__()
 
+        block = None
+        if backbone == 'unet':
+            block = UNet._block
+        elif backbone == 'resnet':
+            block = UNet.res_block
         features = init_features
-        self.encoder1 = UNet._block(n_channels, features, name="enc1")
+        self.encoder1 = block(n_channels, features, name="enc1")
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.encoder2 = UNet._block(features, features * 2, name="enc2")
+        self.encoder2 = block(features, features * 2, name="enc2")
         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.encoder3 = UNet._block(features * 2, features * 4, name="enc3")
+        self.encoder3 = block(features * 2, features * 4, name="enc3")
         self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.encoder4 = UNet._block(features * 4, features * 8, name="enc4")
+        self.encoder4 = block(features * 4, features * 8, name="enc4")
         self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.bottleneck = UNet._block(features * 8, features * 16, name="bottleneck")
+        self.bottleneck = block(features * 8, features * 16, name="bottleneck")
 
         self.upconv4 = nn.ConvTranspose2d(
             features * 16, features * 8, kernel_size=2, stride=2
         )
-        self.decoder4 = UNet._block((features * 8) * 2, features * 8, name="dec4")
+        self.decoder4 = block((features * 8) * 2, features * 8, name="dec4")
         self.upconv3 = nn.ConvTranspose2d(
             features * 8, features * 4, kernel_size=2, stride=2
         )
-        self.decoder3 = UNet._block((features * 4) * 2, features * 4, name="dec3")
+        self.decoder3 = block((features * 4) * 2, features * 4, name="dec3")
         self.upconv2 = nn.ConvTranspose2d(
             features * 4, features * 2, kernel_size=2, stride=2
         )
-        self.decoder2 = UNet._block((features * 2) * 2, features * 2, name="dec2")
+        self.decoder2 = block((features * 2) * 2, features * 2, name="dec2")
         self.upconv1 = nn.ConvTranspose2d(
             features * 2, features, kernel_size=2, stride=2
         )
-        self.decoder1 = UNet._block(features * 2, features, name="dec1")
+        self.decoder1 = block(features * 2, features, name="dec1")
 
         self.conv = nn.Conv2d(
             in_channels=features, out_channels=n_classes, kernel_size=1
@@ -64,6 +70,17 @@ class UNet(nn.Module):
         dec1 = torch.cat((dec1, enc1), dim=1)
         dec1 = self.decoder1(dec1)
         return torch.sigmoid(self.conv(dec1))
+
+    @staticmethod
+    def res_block(in_channels, features, name):
+        return OrderedDict(
+                [
+                    (
+                        name + "resblock",
+                        BasicBlock(in_channels, features)
+                    )
+                ]
+            )
 
     @staticmethod
     def _block(in_channels, features, name):
@@ -97,6 +114,7 @@ class UNet(nn.Module):
                 ]
             )
         )
+
 
 class WNet0404(nn.Module):
 
@@ -144,7 +162,6 @@ class WNet0404(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=features, out_channels=n_classes, kernel_size=1)
 
     def forward(self, x):
-
         # First U
         enc11 = self.encoder11(x)
         enc12 = self.encoder12(self.pool11(enc11))
@@ -218,6 +235,7 @@ class WNet0404(nn.Module):
             )
         )
 
+
 class WNet0402(nn.Module):
 
     def __init__(self, n_channels=3, n_classes=1, init_features=32):
@@ -256,7 +274,6 @@ class WNet0402(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=features, out_channels=n_classes, kernel_size=1)
 
     def forward(self, x):
-
         # First U
         enc11 = self.encoder11(x)
         enc12 = self.encoder12(self.pool11(enc11))
