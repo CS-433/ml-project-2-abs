@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from collections import OrderedDict
-from torchvision.models.resnet import BasicBlock
+from torchvision.models.resnet import BasicBlock, Bottleneck
 
 
 # Unet model derived from https://github.com/mateuszbuda/brain-segmentation-pytorch
@@ -15,7 +15,7 @@ class UNet(nn.Module):
         if backbone == 'unet':
             block = UNet._block
         elif backbone == 'resnet':
-            block = UNet.res_block
+            block = UNet._resblock
         features = init_features
         self.encoder1 = block(n_channels, features, name="enc1")
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -72,20 +72,21 @@ class UNet(nn.Module):
         return torch.sigmoid(self.conv(dec1))
 
     @staticmethod
-    def res_block(in_channels, features, name):
+    def _resblock(in_channels, features, name):
+        shortcut = nn.Conv2d(in_channels, features, kernel_size=1, stride=1, bias=False)
         return nn.Sequential(
             OrderedDict(
                 [
                     (
                         name + "resblock",
-                        BasicBlock(in_channels, features)
+                        BasicBlock(in_channels, features, downsample=shortcut)
                     )
                 ]
             )
         )
 
     @staticmethod
-    def _block(in_channels, features, name):
+    def _block(in_channels, features, name, **kwargs):
         return nn.Sequential(
             OrderedDict(
                 [
