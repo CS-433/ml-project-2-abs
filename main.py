@@ -4,8 +4,7 @@ import torch
 import dataset
 from model import UNet, WNet0404, WNet0402
 from torch.utils.data import DataLoader
-from utils import get_score, load_model, create_folder, save_model, save_image, masks_to_submission, save_track, \
-    dice_loss, save_image_overlap, fgsm_update
+from utils import *
 import segmentation_models_pytorch as smp # hehehehe
 
 parser = argparse.ArgumentParser()
@@ -58,7 +57,7 @@ def main(args):
     elif args.model == 'WNet0402':
         model = WNet0402(n_channels=3, n_classes=1)
     elif args.model == "SMP":
-        model = smp.UnetPlusPlus(encoder_name="resnet34", in_channels=3, classes=1, )
+        model = smp.Unet(encoder_name="resnet34", in_channels=3, classes=1, )
     else:
         raise Exception("The given model does not exist.")
     model = model.cuda() if args.cuda else model
@@ -76,6 +75,8 @@ def main(args):
     # Loss function initialization
     if args.loss == 'dice':
         criterion = dice_loss
+    elif args.loss == 'dice_patches':
+        criterion = lambda output, mask: dice_loss(mask_to_patches(output), mask_to_patches(mask))
     elif args.loss == 'cross entropy':
         criterion = torch.nn.BCELoss(reduction='mean')
         criterion = criterion.cuda() if args.cuda else criterion

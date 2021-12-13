@@ -1,6 +1,8 @@
+import math
 import os
 import re
 import torch
+import torch.nn.functional as F
 import numpy as np
 import pandas as pd
 import matplotlib.image as mpimg
@@ -50,19 +52,6 @@ def create_folder(path):
         os.makedirs(path)
 
 
-def get_score(output, mask, threshold=0.5):
-    """
-    Calculate F1 score of the prediction
-    """
-    labels_ = output > threshold
-    mask_ = np.reshape(mask.cpu().numpy(), (mask.shape[0], -1))
-    labels_ = np.reshape(labels_.cpu().numpy(), (labels_.shape[0], -1))
-    # Calculating f1_score
-    f_score = f1_score(mask_, labels_, average='macro', zero_division=0)
-
-    return f_score
-
-
 def save_image(output, idx, path, threshold=0.5):
     labels = (output > threshold).squeeze().cpu().numpy()
     img = Image.fromarray((labels * 255).astype(np.uint8))
@@ -79,6 +68,39 @@ def save_image_overlap(output, img, idx, path):
 
 
 foreground_threshold = 0.25  # percentage of pixels > 1 required to assign a foreground label to a patch
+
+
+def mask_to_patches(im):
+    """Convert an image into the patches used by the submission format."""
+    patch_size = 16
+    x = len(im.shape)-2
+    y = len(im.shape)-1
+    # pad image
+    out0 = math.ceil(im.shape[x] / patch_size)
+    out1 = math.ceil(im.shape[y] / patch_size)
+    pad0 = out0 - im.shape[x] // patch_size
+    pad1 = out1 - im.shape[y] // patch_size
+    padded = F.pad(im, (0, 0, 0, 0, 0, pad0, 0, pad1), value=foreground_threshold)
+    # convert to patches
+    patches = padded.unfold(x, patch_size, patch_size).unfold(y, patch_size, patch_size)
+    # apply threshold
+    return torch.mean(patches.float(), dim=(x+2, y+2))
+
+
+def get_score(output, mask, threshold=foreground_threshold):
+    """
+    Calculate F1 score of the prediction
+    """
+    output_patches = mask_to_patches(output)
+    mask_patches = mask_to_patches(output)
+    output_labels = output_patches > threshold
+    mask_labels = mask_patches > threshold
+    mask_ = np.reshape(mask_labels.cpu().numpy(), (mask.shape[0], -1))
+    labels_ = np.reshape(output_labels.cpu().numpy(), (output.shape[0], -1))
+    # Calculating f1_score
+    f_score = f1_score(mask_, labels_, average='macro', zero_division=0)
+
+    return f_score
 
 
 # assign a label to a patch
