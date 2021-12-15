@@ -12,7 +12,7 @@ parser.add_argument('--validation_ratio', type=float, default=None,
                     help="the ratio of validation dataset size to the whole dataset. if not set then there will be no validation and the whole dataset is used for training")
 parser.add_argument('--rotate', type=bool, default=True, help="do rotate while training")
 parser.add_argument('--flip', type=bool, default=True, help="do flip while training")
-parser.add_argument('--resize', type=int, default=[608, 608], help="the resize value for test images")
+parser.add_argument('--resize', type=int, default=None, help="the resize value for test images")
 parser.add_argument('--batch_size', type=int, default=8, help="the batch size for the training")
 parser.add_argument('--cuda', type=int, default=1, help="0 or 1, if 1 then the model uses gpu for the training")
 parser.add_argument('--lr', type=float, default=0.001, help="the learning rate value")
