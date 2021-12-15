@@ -92,7 +92,7 @@ def get_score_patches(output, mask, threshold=foreground_threshold):
     Calculate F1 score of the prediction, grouping by patches first.
     """
     output_patches = mask_to_patches(output)
-    mask_patches = mask_to_patches(output)
+    mask_patches = mask_to_patches(mask)
     output_labels = output_patches > threshold
     mask_labels = mask_patches > threshold
     mask_ = np.reshape(mask_labels.cpu().numpy(), (mask.shape[0], -1))
@@ -145,20 +145,24 @@ def masks_to_submission(submission_filename, *image_filenames):
             f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))
 
 
-cols = {'train': {'loss': [], 'f1-score': []},
-        'val': {'loss': [], 'f1-score': []}}
+cols = {'train': {'loss': [], 'f1-score': [], 'f1_patch': []},
+        'val': {'loss': [], 'f1-score': [], 'f1_patch': []}}
 
 
-def save_track(path, args, train_loss=None, train_f1=None, val_loss=None, val_f1=None):
+def save_track(path, args, train_loss=None, train_f1=None, train_f1_patch=None, val_loss=None, val_f1=None, val_f1_patch=None):
     if train_loss is not None:
         cols['train']['loss'].append(train_loss)
     if train_f1 is not None:
         cols['train']['f1-score'].append(train_f1)
+    if train_f1_patch is not None:
+        cols['train']['f1_patch'].append(train_f1_patch)
 
     if val_loss is not None:
         cols['val']['loss'].append(val_loss)
     if val_f1 is not None:
         cols['val']['f1-score'].append(val_f1)
+    if val_f1_patch is not None:
+        cols['val']['f1_patch'].append(val_f1_patch)
 
     df = pd.DataFrame.from_dict(cols['train'])
     df.to_csv(os.path.join(path, args.experiment_name + "_train_tracking.csv"))

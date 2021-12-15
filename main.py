@@ -1,6 +1,4 @@
 import argparse
-import os
-import torch
 import dataset
 from model import UNet, WNet0404, WNet0402
 from torch.utils.data import DataLoader
@@ -90,6 +88,7 @@ def main(args):
             model.train()
             train_loss = []
             train_f1 = []
+            train_f1_patches = []
             for img, mask, diag_mask in train_loader:
                 img = img.cuda().float() if args.cuda else img.float()
                 mask = mask.cuda() if args.cuda else mask
@@ -118,14 +117,16 @@ def main(args):
                 loss.backward()
                 optimizer.step()
 
-                f1_score = get_score(output, mask)
+                f1_score, f1_patches = get_score(output, mask), get_score_patches(output, mask)
 
                 train_loss.append(loss.item())
                 train_f1.append(f1_score)
+                train_f1_patches.append(f1_patches)
 
             save_track(experiment_path, args,
                        train_loss=sum(train_loss) / len(train_loss),
-                       train_f1=sum(train_f1) / len(train_f1))
+                       train_f1=sum(train_f1) / len(train_f1),
+                       train_f1_patch=sum(train_f1_patches) / len(train_f1_patches))
 
             if args.validation_ratio:
                 # Validation
@@ -140,8 +141,7 @@ def main(args):
 
                         output = model(img)
                         loss = criterion(output, mask)
-                        f1_score = get_score(output, mask)
-                        f1_patches = get_score_patches(output, mask)
+                        f1_score, f1_patches = get_score(output, mask), get_score_patches(output, mask)
 
                         val_loss.append(loss.item())
                         val_f1.append(f1_score)
@@ -152,7 +152,10 @@ def main(args):
                 val_f1_patches_to_track = sum(val_f1_patches) / len (val_f1_patches)
                 print('Epoch : {} | Loss = {:.4f}, F1 Score = {:.4f}, F1 Patches Score: {:.4f}'.format(
                     epoch, val_loss_to_track, val_f1_to_track, val_f1_patches_to_track))
-                save_track(experiment_path, args, val_loss=val_loss_to_track, val_f1=val_f1_to_track)
+                save_track(experiment_path, args,
+                           val_loss=val_loss_to_track,
+                           val_f1=val_f1_to_track,
+                           val_f1_patch=val_f1_patches_to_track)
 
                 scheduler.step(val_loss_to_track)
             else:
