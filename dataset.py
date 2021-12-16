@@ -54,7 +54,9 @@ class TrainValSet(Dataset):
         # Creating the rotations
         if add_rotations:
             angles = [15, 30, 45, 60, 75]
+            print(f'Training with {(len(angles) + 1) * len(self.images)} data.')
             if not os.path.isdir(os.path.join(images_path, 'rotations')):
+                print(f'Adding the rotated images..')
                 os.mkdir(os.path.join(images_path, 'rotations'))
                 for item in self.images:
                     itm = Image.open(item)
@@ -64,6 +66,7 @@ class TrainValSet(Dataset):
                             item.stem + '_' + str(angle)) + item.suffix
                             )
             if not os.path.isdir(os.path.join(gt_path, 'rotations')):
+                print(f'Adding the rotated groundtruthes..')
                 os.mkdir(os.path.join(gt_path, 'rotations'))
                 for item in self.gt:
                     itm = Image.open(item)
