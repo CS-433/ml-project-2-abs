@@ -6,6 +6,7 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 import cv2
 import numpy as np
+from pathlib import Path
 
 
 def get_diag_mask(mask):
@@ -26,38 +27,91 @@ def get_diag_mask(mask):
 
 class TrainValSet(Dataset):
 
-    def __init__(self, path, set_type, ratio, rotate=True, flip=True, resize=None, diag_mask=True):
+    def __init__(self, path, set_type, ratio, rotate=True, flip=True, resize=None, diag_mask=True, add_rotations=False):
         super(Dataset, self).__init__()
 
         # Get image and ground truth paths
-        images_path = os.path.join(path, 'training', 'images')
-        gt_path = os.path.join(path, 'training', 'groundtruth')
+        images_path = Path(path) / 'training' / 'images'
+        gt_path = Path(path) / 'training' / 'groundtruth'
 
+
+        # Listing the images and ground truth files
         self.images = [
-            os.path.join(images_path, item)
+            images_path / item
             for item in os.listdir(images_path)
             if item.endswith('.png')
         ]
         self.images.sort()
 
         self.gt = [
-            os.path.join(gt_path, item)
+            gt_path / item
             for item in os.listdir(gt_path)
             if item.endswith('.png')
         ]
         self.gt.sort()
+
+
+        # Creating the rotations
+        if add_rotations:
+            angles = [15, 30, 45, 60, 75]
+            if not os.path.isdir(os.path.join(images_path, 'rotations')):
+                os.mkdir(os.path.join(images_path, 'rotations'))
+                for item in self.images:
+                    itm = Image.open(item)
+                    for angle in angles:
+                        (TF.rotate(itm, angle)).save(
+                            os.path.join(images_path, 'rotations',
+                            item.stem + '_' + str(angle)) + item.suffix
+                            )
+            if not os.path.isdir(os.path.join(gt_path, 'rotations')):
+                os.mkdir(os.path.join(gt_path, 'rotations'))
+                for item in self.gt:
+                    itm = Image.open(item)
+                    for angle in angles:
+                        (TF.rotate(itm, angle)).save(
+                            os.path.join(gt_path, 'rotations',
+                            item.stem + '_' + str(angle)) + item.suffix
+                            )
+
+
+            # Listing the rotated images and ground truth files
+            self.images_rot = [
+                images_path / 'rotations' / item
+                for item in os.listdir(images_path / 'rotations')
+                if item.endswith('.png')
+            ]
+            self.images_rot.sort()
+
+            self.gt_rot = [
+                gt_path / 'rotations' / item
+                for item in os.listdir(gt_path / 'rotations')
+                if item.endswith('.png')
+            ]
+            self.gt_rot.sort()
+        
 
         # divide to validation and training set based on the value of set_type
         idx = int(len(self.images) * ratio)
         if set_type == 'train':
             self.images = self.images[idx:]
             self.gt = self.gt[idx:]
+            if add_rotations:
+                self.images_rot = self.images_rot[idx * len(angles):]
+                self.gt_rot = self.gt_rot[idx * len(angles):]
         elif set_type == 'val':
             self.images = self.images[:idx]
             self.gt = self.gt[:idx]
+            if add_rotations:
+                self.images_rot = self.images_rot[:idx * len(angles)]
+                self.gt_rot = self.gt_rot[:idx * len(angles)]
         else:
             raise Exception("set_type is not correct")
 
+        if add_rotations:
+            self.images = self.images + self.images_rot
+            self.gt = self.gt + self.gt_rot
+
+        
         self.set_type = set_type
         self.rotate = rotate
         self.flip = flip
