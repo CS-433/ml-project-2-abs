@@ -27,13 +27,12 @@ def get_diag_mask(mask):
 
 class TrainValSet(Dataset):
 
-    def __init__(self, path, set_type, ratio, rotate=True, flip=True, resize=None, diag_mask=True, add_rotations=False):
+    def __init__(self, path, set_type, ratio, rotate=True, flip=True, resize=None, diag_mask=True):
         super(Dataset, self).__init__()
 
         # Get image and ground truth paths
         images_path = Path(path) / 'training' / 'images'
         gt_path = Path(path) / 'training' / 'groundtruth'
-
 
         # Listing the images and ground truth files
         self.images = [
@@ -50,81 +49,32 @@ class TrainValSet(Dataset):
         ]
         self.gt.sort()
 
-
-        # Creating the rotations
-        if add_rotations:
-            angles = [15, 30, 45, 60, 75]
-            print(f'Training with {(len(angles) + 1) * len(self.images)} data.')
-            if not os.path.isdir(os.path.join(images_path, 'rotations')):
-                print(f'Adding the rotated images..')
-                os.mkdir(os.path.join(images_path, 'rotations'))
-                for item in self.images:
-                    itm = Image.open(item)
-                    for angle in angles:
-                        (TF.rotate(itm, angle)).save(
-                            os.path.join(images_path, 'rotations',
-                            item.stem + '_' + str(angle)) + item.suffix
-                            )
-            if not os.path.isdir(os.path.join(gt_path, 'rotations')):
-                print(f'Adding the rotated groundtruthes..')
-                os.mkdir(os.path.join(gt_path, 'rotations'))
-                for item in self.gt:
-                    itm = Image.open(item)
-                    for angle in angles:
-                        (TF.rotate(itm, angle)).save(
-                            os.path.join(gt_path, 'rotations',
-                            item.stem + '_' + str(angle)) + item.suffix
-                            )
-
-
-            # Listing the rotated images and ground truth files
-            self.images_rot = [
-                images_path / 'rotations' / item
-                for item in os.listdir(images_path / 'rotations')
-                if item.endswith('.png')
-            ]
-            self.images_rot.sort()
-
-            self.gt_rot = [
-                gt_path / 'rotations' / item
-                for item in os.listdir(gt_path / 'rotations')
-                if item.endswith('.png')
-            ]
-            self.gt_rot.sort()
-        
-
         # divide to validation and training set based on the value of set_type
         idx = int(len(self.images) * ratio)
         if set_type == 'train':
             self.images = self.images[idx:]
             self.gt = self.gt[idx:]
-            if add_rotations:
-                self.images_rot = self.images_rot[idx * len(angles):]
-                self.gt_rot = self.gt_rot[idx * len(angles):]
         elif set_type == 'val':
             self.images = self.images[:idx]
             self.gt = self.gt[:idx]
-            if add_rotations:
-                self.images_rot = self.images_rot[:idx * len(angles)]
-                self.gt_rot = self.gt_rot[:idx * len(angles)]
         else:
             raise Exception("set_type is not correct")
 
-        if add_rotations:
-            self.images = self.images + self.images_rot
-            self.gt = self.gt + self.gt_rot
-
-        
         self.set_type = set_type
         self.rotate = rotate
         self.flip = flip
         self.resize = resize
         self.diag_mask = diag_mask
 
-    def transform(self, img, mask):
+    def transform(self, img, mask, index):
         """
         Augmenting the dataset by doing random flip or random rotate and justify dataset by resizing
         """
+
+        # Resize
+        if self.resize:
+            img = TF.resize(img, self.resize)
+            mask = TF.resize(mask, self.resize)
 
         # Do a vertical or horizontal flip randomly
         if self.flip and random.random() > 0.33:
@@ -135,15 +85,15 @@ class TrainValSet(Dataset):
                 img = TF.vflip(img)
                 mask = TF.vflip(mask)
 
-        # Do a random rotate
+        # First apply a rotate based on diag_angles to extend dataset with non-horizontal and non-vertical roads and
+        # then do a random rotate
         if self.rotate:
+            diag_angles = [0, 15, 30, 45, 60, 75]
+            img = TF.rotate(img, diag_angles[index % 6])
+            mask = TF.rotate(mask, diag_angles[index % 6])
             angle = random.choice([0, 90, 180, 270])
             img = TF.rotate(img, angle)
             mask = TF.rotate(mask, angle)
-
-        if self.resize:
-            img = TF.resize(img, self.resize)
-            mask = TF.resize(mask, self.resize)
 
         to_tensor = transforms.ToTensor()
 
@@ -157,20 +107,25 @@ class TrainValSet(Dataset):
         return img, mask.round().long(), diag_mask
 
     def __getitem__(self, index):
-        img, mask = self.images[index], self.gt[index]
+        if self.rotate:
+            img, mask = self.images[index // 6], self.gt[index // 6]
+        else:
+            img, mask = self.images[index], self.gt[index]
 
         # Read image and ground truth files
         img = Image.open(img)
         mask = Image.open(mask)
 
         # Apply dataset augmentation transforms if needed
-        img, mask, diag_mask = self.transform(img, mask)
+        img, mask, diag_mask = self.transform(img, mask, index)
 
         if self.set_type == 'train':
             return img, mask, diag_mask
         return img, mask
 
     def __len__(self):
+        if self.rotate:
+            return len(self.images) * 6
         return len(self.images)
 
 
