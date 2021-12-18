@@ -7,6 +7,7 @@ from PIL import Image
 import cv2
 import numpy as np
 from pathlib import Path
+from utils import random_erase
 
 
 def get_diag_mask(mask):
@@ -27,7 +28,7 @@ def get_diag_mask(mask):
 
 class TrainValSet(Dataset):
 
-    def __init__(self, path, set_type, ratio, rotate=True, flip=True, resize=None, diag_mask=True):
+    def __init__(self, path, set_type, ratio, rotate=True, flip=True, resize=None, diag_mask=True, random_crops=0):
         super(Dataset, self).__init__()
 
         # Get image and ground truth paths
@@ -65,6 +66,7 @@ class TrainValSet(Dataset):
         self.flip = flip
         self.resize = resize
         self.diag_mask = diag_mask
+        self.random_crops = random_crops
 
     def transform(self, img, mask, index):
         """
@@ -103,6 +105,9 @@ class TrainValSet(Dataset):
             diag_mask = to_tensor(diag_mask).round().long()
 
         img, mask = to_tensor(img), to_tensor(mask)
+
+        # Erasing random rectangles from the image
+        img = random_erase(img, n=self.random_crops)
 
         return img, mask.round().long(), diag_mask
 

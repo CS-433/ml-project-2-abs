@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.image as mpimg
 import PIL.Image as Image
 from sklearn.metrics import f1_score
+import random
 
 
 def load_model(model, optimizer, args):
@@ -85,6 +86,30 @@ def mask_to_patches(im):
     patches = padded.unfold(x, patch_size, patch_size).unfold(y, patch_size, patch_size)
     # apply threshold
     return torch.mean(patches.float(), dim=(x+2, y+2))
+
+def random_erase(img, n=1, scale=(0.04, 0.15), rgb=(.5, .5, .5)):
+    """
+    Erase random rectangles from the image.
+        img: torch.tensor
+        n: number of rectangles
+        scale: range of width and height with respect to the size of the image
+        rgb: color of the rectangle, noise if 'random'"""
+        
+    for _ in range(n):
+        c = (random.randint(0, img.shape[1]), random.randint(0, img.shape[2]))
+        h = round(img.shape[1] * (scale[0] + random.random() * scale[1]))
+        w = round(img.shape[2] * (scale[0] + random.random() * scale[1]))
+        if rgb == 'random':
+            for i in range(c[0]-h, c[0]):
+                for j in range(c[1]-w, c[1]):
+                    img[0, i, j] = random.random()
+                    img[1, i, j] = random.random()
+                    img[2, i, j] = random.random()
+        else:
+            img[0, c[0]-h:c[0], c[1]-w:c[1]] = rgb[0]
+            img[1, c[0]-h:c[0], c[1]-w:c[1]] = rgb[1]
+            img[2, c[0]-h:c[0], c[1]-w:c[1]] = rgb[2]
+    return img
 
 
 def get_score_patches(output, mask, threshold=foreground_threshold):

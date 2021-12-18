@@ -14,6 +14,7 @@ parser.add_argument('--add_rotations', type=bool, default=False, help="Add rotat
 parser.add_argument('--rotate', type=bool, default=True, help="do rotate while training")
 parser.add_argument('--flip', type=bool, default=True, help="do flip while training")
 parser.add_argument('--resize', type=int, default=None, help="the resize value for test images")
+parser.add_argument('--random_crops', type=int, default=0, help="number of random crops for data augmentation")
 parser.add_argument('--batch_size', type=int, default=8, help="the batch size for the training")
 parser.add_argument('--cuda', type=int, default=1, help="0 or 1, if 1 then the model uses gpu for the training")
 parser.add_argument('--lr', type=float, default=0.001, help="the learning rate value")
@@ -35,7 +36,7 @@ parser.add_argument('--adversarial_bound', type=float, default=0,
 def main(args):
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
-    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip, resize=args.resize, diag_mask=args.loss_weight != 0)
+    train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip, resize=args.resize, diag_mask=args.loss_weight != 0, random_crops=args.random_crops)
     test_dataset = dataset.TestSet(path=args.path)
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
