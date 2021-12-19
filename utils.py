@@ -87,19 +87,19 @@ def mask_to_patches(im):
     # apply threshold
     return torch.mean(patches.float(), dim=(x+2, y+2))
 
-def random_erase(img, n=1, scale=(0.04, 0.15), rgb=(.5, .5, .5)):
+def random_erase(img, n=1, scale=(0, 0.1), rgb=(.5, .5, .5)):
     """
     Erase random rectangles from the image.
         img: torch.tensor
         n: number of rectangles
         scale: range of width and height with respect to the size of the image
-        rgb: color of the rectangle, noise if 'random'"""
+        rgb: color of the rectangle"""
         
     for _ in range(n):
         c = (random.randint(0, img.shape[1]), random.randint(0, img.shape[2]))
         h = round(img.shape[1] * (scale[0] + random.random() * scale[1]))
         w = round(img.shape[2] * (scale[0] + random.random() * scale[1]))
-        if rgb == 'random':
+        if rgb == 'noise':
             for i in range(c[0]-h, c[0]):
                 for j in range(c[1]-w, c[1]):
                     img[0, i, j] = random.random()

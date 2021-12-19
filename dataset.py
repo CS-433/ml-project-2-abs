@@ -107,7 +107,7 @@ class TrainValSet(Dataset):
         img, mask = to_tensor(img), to_tensor(mask)
 
         # Erasing random rectangles from the image
-        img = random_erase(img, n=self.random_crops)
+        img = random_erase(img, n=self.random_crops, rgb='noise')
 
         return img, mask.round().long(), diag_mask
 
