@@ -10,7 +10,6 @@ parser.add_argument('--model', type=str, default="UNet",
                     help="selects the model. Acceptable values: \"UNet\", \"WNet0404\", \"WNet0402\"")
 parser.add_argument('--validation_ratio', type=float, default=None,
                     help="the ratio of validation dataset size to the whole dataset. if not set then there will be no validation and the whole dataset is used for training")
-parser.add_argument('--add_rotations', type=bool, default=False, help="Add rotated images to the dataset")
 parser.add_argument('--rotate', type=bool, default=True, help="do rotate while training")
 parser.add_argument('--flip', type=bool, default=True, help="do flip while training")
 parser.add_argument('--resize', type=int, default=None, help="the resize value for test images")
@@ -34,6 +33,9 @@ parser.add_argument('--adversarial_bound', type=float, default=0,
 
 
 def main(args):
+
+    # TODO: Set boolean arguments to 1/0
+
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
     train_dataset = dataset.TrainValSet(path=args.path, set_type='train', ratio=ratio, rotate=args.rotate, flip=args.flip, resize=args.resize, diag_mask=args.loss_weight != 0, random_crops=args.random_crops)
