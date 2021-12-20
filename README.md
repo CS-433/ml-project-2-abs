@@ -1,6 +1,7 @@
 # CS-433 Project 2: Road Segmentation Using U-net
 
 This is a repository for the second project of the Machine Learning (CS-433) course at EPFL by Nicolas Flammarison and Martin Jaggi, autumn 2021. The objective of this project is to train a classification model to segment the roads in aerial images. The train dataset consists of 100 pairs of 400x400 pixels aerial images from Google Maps and their ground-truth images, in which the road pixels are labeled 1 and background pixels with 0. One of the train images and its ground-truth is presented below:
+
 | ![](images/img_033.png) | ![](images/gt_033.png) |
 
 ### Contributors
