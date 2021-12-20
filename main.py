@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from utils import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--path', type=str, help="dataset path")
+parser.add_argument('--path', type=str, default='./dataset', help="dataset path")
 parser.add_argument('--model', type=str, default="UNet",
                     help="selects the model. Acceptable values: \"UNet\", \"WNet0404\", \"WNet0402\"")
 parser.add_argument('--validation_ratio', type=float, default=None,
@@ -19,7 +19,7 @@ parser.add_argument('--cuda', type=int, default=1, help="0 or 1, if 1 then the m
 parser.add_argument('--lr', type=float, default=0.001, help="the learning rate value")
 parser.add_argument('--weight_path', type=str, default=None,
                     help="the path to saved weights. if not specified there will be no weight loaded")
-parser.add_argument('--experiment_name', type=str, default="Road Segmentation", help="the name of the experiment")
+parser.add_argument('--experiment_name', type=str, default="NotSpec", help="the name of the experiment")
 parser.add_argument('--train', type=bool, default=True, help="if true then training is done")
 parser.add_argument('--test', type=bool, default=True, help="if true then test is done")
 parser.add_argument('--epochs', type=int, default=100, help="number of epoch")
