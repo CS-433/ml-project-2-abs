@@ -1,6 +1,6 @@
 import argparse
 import dataset
-from model import UNet, WNet0404, WNet0402
+from model import UNet, UNet05, UNet06, WNet0404, WNet0402
 from torch.utils.data import DataLoader
 from utils import *
 
@@ -45,7 +45,7 @@ def main(args):
     test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False)
 
     if args.validation_ratio:
-        val_dataset = dataset.TrainValSet(path=args.path, set_type='val', ratio=ratio, rotate=args.rotate, flip=args.flip)
+        val_dataset = dataset.TrainValSet(path=args.path, set_type='val', ratio=ratio, rotate=args.rotate, flip=args.flip, resize=args.resize)
         val_loader = DataLoader(dataset=val_dataset, batch_size=args.batch_size, shuffle=True)
 
     # Model initialization
@@ -53,6 +53,10 @@ def main(args):
         model = UNet(n_channels=3, n_classes=1)
     elif args.model == 'UNet_Res':
         model = UNet(n_channels=3, n_classes=1, backbone='resnet')
+    elif args.model == 'UNet05':
+        model = UNet05(n_channels=3, n_classes=1)
+    elif args.model == 'UNet06':
+        model = UNet06(n_channels=3, n_classes=1)
     elif args.model == 'WNet0404':
         model = WNet0404(n_channels=3, n_classes=1)
     elif args.model == 'WNet0402':
@@ -165,7 +169,7 @@ def main(args):
             else:
                 print("Epoch : {} | No validation".format(epoch))
 
-            if args.save_weights:
+            if args.save_weights and epoch % 10 == 9:
                 save_model(model, optimizer, experiment_path, args)
 
     if args.test:
