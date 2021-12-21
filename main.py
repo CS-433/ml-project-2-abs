@@ -187,7 +187,7 @@ def main(args):
                 print("Epoch : {} | No validation".format(epoch))
 
             # Saving the weights
-            if args.save_weights and (epoch % 10 == 9 or epoch == args.epoch - 1):
+            if args.save_weights and (epoch % 10 == 9 or epoch == args.epochs - 1):
                 save_model(model, optimizer, experiment_path, args)
 
     # Testing
