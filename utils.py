@@ -13,8 +13,9 @@ import random
 
 def load_model(model, optimizer, args):
     """
-    Loads states for weights and the optimizer
+    Loads states for weights and the optimizer.
     """
+
     checkpoint = torch.load(args.weight_path, map_location=torch.device('cuda' if args.cuda else 'cpu'))
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -22,8 +23,9 @@ def load_model(model, optimizer, args):
 
 def save_model(model, optimizer, path, args):
     """
-    Saves the model and the optimizer states
+    Saves the model and the optimizer states.
     """
+
     save_path = os.path.join(path, args.experiment_name + '.pt')
     torch.save({
         "model_state_dict": model.state_dict(),
@@ -33,16 +35,21 @@ def save_model(model, optimizer, path, args):
 
 # Dice loss derived from https://github.com/mateuszbuda/brain-segmentation-pytorch
 def dice_loss(output, mask, smooth=1.0):
+    """
+    Computes the dice loss.
+    """
+
     output = output[:, 0].contiguous().view(-1)
     mask = mask[:, 0].contiguous().view(-1)
     intersection = (output * mask).sum()
-    dsc = (2. * intersection + smooth) / (
-            output.sum() + mask.sum() + smooth
-    )
+    dsc = (2. * intersection + smooth) / (output.sum() + mask.sum() + smooth)
     return 1. - dsc
 
 
 def fgsm_update(img, output, mask, update_max_norm=0.25):
+    """
+    FGSM update step for adversarial attack.
+    """
     data_grad = img.grad
     idx = (output > 0.5) == mask
     return torch.clamp(img + idx * update_max_norm * torch.sign(data_grad), min=0, max=1)
@@ -60,6 +67,9 @@ def save_image(output, idx, path, threshold=0.5):
 
 
 def save_image_overlap(output, img, idx, path):
+    """
+    Highlights the predicted roads on the image and saves it.
+    """
     labels = (output > 0.5).cpu().numpy().squeeze()
     img = img.cpu().numpy().squeeze() * 255
     img[2, labels] = 150
@@ -72,7 +82,9 @@ foreground_threshold = 0.25  # percentage of pixels > 1 required to assign a for
 
 
 def mask_to_patches(im):
-    """Convert an image into the patches used by the submission format."""
+    """
+    Convert an image into the patches used by the submission format.
+    """
     patch_size = 16
     x = len(im.shape)-2
     y = len(im.shape)-1
@@ -93,7 +105,8 @@ def random_erase(img, n=1, scale=(0, 0.1), rgb=(.5, .5, .5)):
         img: torch.tensor
         n: number of rectangles
         scale: range of width and height with respect to the size of the image
-        rgb: color of the rectangle"""
+        rgb: color of the rectangle
+    """
         
     for _ in range(n):
         c = (random.randint(0, img.shape[1]), random.randint(0, img.shape[2]))
@@ -151,7 +164,9 @@ def patch_to_label(patch):
 
 
 def mask_to_submission_strings(image_filename):
-    """Reads a single image and outputs the strings that should go into the submission file"""
+    """
+    Reads a single image and outputs the strings that should go into the submission file
+    """
     img_number = int(re.search(r"\d+", image_filename).group(0))
     im = mpimg.imread(image_filename)
     patch_size = 16
@@ -163,7 +178,9 @@ def mask_to_submission_strings(image_filename):
 
 
 def masks_to_submission(submission_filename, *image_filenames):
-    """Converts images into a submission file"""
+    """
+    Converts images into a submission file
+    """
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in image_filenames[0:]:
@@ -175,6 +192,9 @@ cols = {'train': {'loss': [], 'f1-score': [], 'f1_patch': []},
 
 
 def save_track(path, args, train_loss=None, train_f1=None, train_f1_patch=None, val_loss=None, val_f1=None, val_f1_patch=None):
+    """
+    Saves the result of the epoch in the corresponding file.
+    """
     if train_loss is not None:
         cols['train']['loss'].append(train_loss)
     if train_f1 is not None:
