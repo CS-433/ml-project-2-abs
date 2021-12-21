@@ -4,25 +4,14 @@ This is a repository for the second project of the Machine Learning (CS-433) cou
 
 | ![](images/img_033.png) | ![](images/gt_033.png) |
 
-### Contributors
-- Ali Garjani
-- Sepehr Mousavi
-- Bruno Ploumhans
-
 ## Setup
 This setup requires a Default Unix Environment with an installed Pyhton 3.7 or Python 3.8. Use the following command to install all the required libraries:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Regenerating the final submission
-
-The results of the final AICrowd submission ([#168633](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation/submissions/168633)) is in `./experiments/Final_Submission`. To regenerate the same result, run the following command:
-
-```bash
-python main.py --experiment "Final_Submission_Gen" --path ./dataset --model "UNet" --validation_ratio 0.2 --cuda 1 --loss 'dice' --epoch 70 --save_weights True
-```
-The predictions and the submission file will be saved in this directory: `./experiments/Final_Submission_Gen`.
+## Codes and folders
+The train and test data are in `./dataset`. All new experiments will be saved in the `./experiment` folder under the given name to the experiment. `model.py` contains the U-Net model classes along with two similar models. `dataset.py` contains the dataset classes and transformations (data augmentation) for train, validation, and test data. `utils.py` contains all auxiliary functions. For training and testing, `main.py` should be called, which is described in the next section.
 
 ## Training and testing
 
@@ -49,7 +38,9 @@ For training a new model or getting the predictions of a model on the test datas
 | loss                  | str   | 'dice'    | Loss function among: 'dice', 'cross entropy', 'dice + cross entropy'|
 | adversarial_bound     | float | 0         | The bound (epsilon) of the adversarial training. No adversarial attack if zero.|
 
-The results will be saved in a folder with the given experiment name in `./experiments`. If you are using an external dataset, or are storing the dataset in a different directory, the directory should be given by `--path /.../dataset`. If you don't have access to a GPU, set `--cuda 0`.
+- The results will be saved in a folder with the given experiment name in `./experiments`.
+- If you are using an external dataset, or are storing the dataset in a different directory, the directory should be given by `--path /.../dataset`.
+- If you don't have access to a GPU, set `--cuda 0`.
 
 ### Examples
 
@@ -66,3 +57,26 @@ To get the test results based on a pre-trained model, run:
 ```bash
 python main.py --path ./dataset --weights_path "/.../weights.pt" --experiment "Test_Pretrained" --train False
 ```
+
+### Regenerating the final submission
+
+The results of the final AICrowd submission ([#168633](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation/submissions/168633)) is in `./experiments/Final_Submission`. To train and regenerate the same model and result, run the following command:
+```bash
+python main.py --experiment "Final_Submission_Gen" --path ./dataset --model "UNet" --validation_ratio 0.2 --cuda 1 --loss 'dice' --epoch 70 --save_weights True
+```
+- The predictions and the submission file will be saved in this directory: `./experiments/Final_Submission_Gen`.
+- If you don't have access to a GPU, set `--cuda 0`.
+
+
+To get predictions of the trained model on the test dataset, run:
+```bash
+python main.py --path ./dataset --weights_path "./experiments/Final_Submission/Final_Submission.pt" --experiment "Final_Submission_Test" --train False
+```
+- The predictions and the submission file will be saved in this directory: `./experiments/Final_Submission_Test`.
+- If you don't have access to a GPU, set `--cuda 0`.
+
+
+## Contributors
+- Ali Garjani
+- Sepehr Mousavi
+- Bruno Ploumhans
