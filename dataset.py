@@ -4,7 +4,6 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import transforms
 import torchvision.transforms.functional as TF
 from PIL import Image
-import cv2
 import numpy as np
 from pathlib import Path
 from utils import random_erase
