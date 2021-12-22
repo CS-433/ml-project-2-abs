@@ -19,24 +19,24 @@ For training a new model or getting the predictions of a model on the test datas
 
 | Flag                  | Type  | Default   | Description                               | 
 | --------------------- | ----- | --------- | ----------------------------------------- |
-| path                  | str   | './dataset' | Dataset path.                             |
-| model                 | str   | 'UNet'    | The selected model among: 'UNet', 'WNet0404', 'WNet0402'.|
+| path                  | str   | './dataset' | Dataset path.                           |
+| experiment_name       | str   | NotSpec   | The name of the experiment.               |
+| train                 | bool  | True      | Trains the model if True.                 |
+| test                  | bool  | True      | Tests the model if True.                  |
+| model                 | str   | 'UNet'    | The selected model among: 'UNet', 'UNet06', 'WNet0404'.|
 | validation_ratio      | float | None      | The ratio of the validation dataset.      |
 | rotate                | bool  | True      | Train over rotated images.                |
 | flip                  | bool  | True      | Random flip in training.                  |
 | resize                | int   | None      | The resize value for test images.         |
 | random_crops          | int   | 0         | Number of random erasings per image.      |
-| batch_size            | int   | 8         | The batch size for SGD.                   |
-| cuda                  | int   | 1         | Uses GPU if 1, CPU if 0.                  |
-| lr                    | float | 1e-03     | The initial optimization learning rate.   |
-| weight_path           | str   | None      | Path of the initial weights.              |
-| experiment_name       | str   | NotSpec   | The name of the experiment.               |
-| train                 | bool  | True      | Trains the model if True.                 |
-| test                  | bool  | True      | Tests the model if True.                  |
 | epochs                | int   | 100       | Number of epochs.                         |
-| save_weights          | bool  | False     | Save weights after every epoch if True.   |
+| batch_size            | int   | 8         | The batch size for SGD.                   |
+| lr                    | float | 1e-03     | The initial optimization learning rate.   |
 | loss                  | str   | 'dice'    | Loss function among: 'dice', 'cross entropy', 'dice + cross entropy'|
 | adversarial_bound     | float | 0         | The bound (epsilon) of the adversarial training. No adversarial attack if zero.|
+| cuda                  | int   | 1         | Uses GPU if 1, CPU if 0.                  |
+| save_weights          | bool  | False     | Saves the weights after every 10 epoch if True.|
+| weight_path           | str   | None      | Path of the initial weights (If needed).  |
 
 - The results will be saved in a folder with the given experiment name in `./experiments`.
 - If you are using an external dataset, or are storing the dataset in a different directory, the directory should be given by `--path /.../dataset`.
@@ -60,7 +60,7 @@ python main.py --path ./dataset --weights_path "/.../weights.pt" --experiment "T
 
 ### Regenerating the final submission
 
-The results of the final AICrowd submission ([#168633](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation/submissions/168633)) is in `./experiments/Final_Submission`. To train and regenerate the same model and result, run the following command:
+The results of the final AICrowd submission ([#168633](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation/submissions/168633)) is in `./experiments/Final_Submission`. The pre-trained weightes could not be included due to github limitations. To train and predict using this model, please download the floder from [Google drive](https://drive.google.com/drive/folders/1_ZoEnNRjN6OTn2d6arfJIbMQX4kv6Zwv?usp=sharing) and replace the folder on your local machine. To train and regenerate the same model and result, run the following command:
 ```bash
 python main.py --experiment "Final_Submission_Gen" --path ./dataset --model "UNet" --validation_ratio 0.2 --cuda 1 --loss 'dice' --epoch 70 --save_weights True
 ```
@@ -72,11 +72,12 @@ To get predictions of the trained model on the test dataset, run:
 ```bash
 python main.py --path ./dataset --weights_path "./experiments/Final_Submission/Final_Submission.pt" --experiment "Final_Submission_Test" --train False
 ```
+- Please make sure to replace the `Final_Submission` folder with the link provided above before running this command.
 - The predictions and the submission file will be saved in this directory: `./experiments/Final_Submission_Test`.
 - If you don't have access to a GPU, set `--cuda 0`.
 
 
 ## Contributors
-- Ali Garjani
-- Sepehr Mousavi
-- Bruno Ploumhans
+- Ali Garjani ([ali.garjani@epfl.ch](mailto:ali.garjani@epfl.ch))
+- Sepehr Mousavi ([sepehr.mousavi@epfl.ch](mailto:sepehr.mousavi@epfl.ch))
+- Bruno Ploumhans ([bruno.ploumhans@epfl.ch](mailto:bruno.ploumhans@epfl.ch))

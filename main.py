@@ -212,5 +212,17 @@ def main(args):
 
 
 if __name__ == '__main__':
+
+    # Getting and validating the arguments
     args = parser.parse_args()
+    if args.cuda:
+        if not torch.cuda.is_available():
+            raise Exception("GPU not available. Set --cuda 0 to run with CPU.")
+    if args.validation_ratio > 0.8 or args.validation_ratio < 0:
+        raise Exception("Validation ratio is not acceptable. Please eneter a value between 0 and 0.8.")
+    if args.model not in ('UNet', 'UNet06', 'WNet0404'):
+        raise Exception("The given model does not exist.")
+    if args.loss not in ('dice', 'cross entropy', 'dice + cross entropy', 'dice_patches'):
+        raise Exception("The given loss function does not exist. Acceptable losses: 'dice', 'cross entropy', 'dice + cross entropy', 'dice_patches'")
+    
     main(args)
