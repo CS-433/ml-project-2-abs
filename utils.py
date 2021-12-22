@@ -86,8 +86,8 @@ def mask_to_patches(im):
     Convert an image into the patches used by the submission format.
     """
     patch_size = 16
-    x = len(im.shape)-2
-    y = len(im.shape)-1
+    x = len(im.shape) - 2
+    y = len(im.shape) - 1
     # pad image
     out0 = math.ceil(im.shape[x] / patch_size)
     out1 = math.ceil(im.shape[y] / patch_size)
@@ -97,7 +97,8 @@ def mask_to_patches(im):
     # convert to patches
     patches = padded.unfold(x, patch_size, patch_size).unfold(y, patch_size, patch_size)
     # apply threshold
-    return torch.mean(patches.float(), dim=(x+2, y+2))
+    return torch.mean(patches.float(), dim=(x + 2, y + 2))
+
 
 def random_erase(img, n=1, scale=(0, 0.1), rgb=(.5, .5, .5)):
     """
@@ -107,21 +108,21 @@ def random_erase(img, n=1, scale=(0, 0.1), rgb=(.5, .5, .5)):
         scale: range of width and height with respect to the size of the image
         rgb: color of the rectangle
     """
-        
+
     for _ in range(n):
         c = (random.randint(0, img.shape[1]), random.randint(0, img.shape[2]))
         h = round(img.shape[1] * (scale[0] + random.random() * scale[1]))
         w = round(img.shape[2] * (scale[0] + random.random() * scale[1]))
         if rgb == 'noise':
-            for i in range(c[0]-h, c[0]):
-                for j in range(c[1]-w, c[1]):
+            for i in range(c[0] - h, c[0]):
+                for j in range(c[1] - w, c[1]):
                     img[0, i, j] = random.random()
                     img[1, i, j] = random.random()
                     img[2, i, j] = random.random()
         else:
-            img[0, c[0]-h:c[0], c[1]-w:c[1]] = rgb[0]
-            img[1, c[0]-h:c[0], c[1]-w:c[1]] = rgb[1]
-            img[2, c[0]-h:c[0], c[1]-w:c[1]] = rgb[2]
+            img[0, c[0] - h:c[0], c[1] - w:c[1]] = rgb[0]
+            img[1, c[0] - h:c[0], c[1] - w:c[1]] = rgb[1]
+            img[2, c[0] - h:c[0], c[1] - w:c[1]] = rgb[2]
     return img
 
 
@@ -191,7 +192,8 @@ cols = {'train': {'loss': [], 'f1-score': [], 'f1_patch': []},
         'val': {'loss': [], 'f1-score': [], 'f1_patch': []}}
 
 
-def save_track(path, args, train_loss=None, train_f1=None, train_f1_patch=None, val_loss=None, val_f1=None, val_f1_patch=None):
+def save_track(path, args, train_loss=None, train_f1=None, train_f1_patch=None, val_loss=None, val_f1=None,
+               val_f1_patch=None):
     """
     Saves the result of the epoch in the corresponding file.
     """

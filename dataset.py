@@ -1,10 +1,9 @@
 import os
 import random
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 import torchvision.transforms.functional as TF
 from PIL import Image
-import numpy as np
 from pathlib import Path
 from utils import random_erase
 
@@ -18,7 +17,7 @@ class TrainValSet(Dataset):
         images_path = Path(path) / 'training' / 'images'
         gt_path = Path(path) / 'training' / 'groundtruth'
 
-        # Listing the images and ground truth files
+        # Listing the images and ground truth file paths
         self.images = [
             images_path / item
             for item in os.listdir(images_path)
@@ -52,7 +51,7 @@ class TrainValSet(Dataset):
 
     def transform(self, img, mask, index):
         """
-        Augmenting the dataset by doing random flip or random rotate and justify dataset by resizing
+        Augmenting the dataset by doing random flip or rotate or justify dataset by resizing
         """
 
         # Resize
@@ -79,6 +78,7 @@ class TrainValSet(Dataset):
             img = TF.rotate(img, angle)
             mask = TF.rotate(mask, angle)
 
+        # Transforming from PIL type to torch.tensor and normalizing the data to range [0, 1]
         to_tensor = transforms.ToTensor()
         img, mask = to_tensor(img), to_tensor(mask)
 
@@ -126,7 +126,10 @@ class TestSet(Dataset):
     def __getitem__(self, index):
         img = self.images[index]
         img = Image.open(img)
+
+        # Transforming from PIL type to torch.tensor and normalizing the data to range [0, 1]
         img = transforms.ToTensor()(img)
+
         return img
 
     def __len__(self):

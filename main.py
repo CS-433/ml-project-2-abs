@@ -3,58 +3,58 @@ import dataset
 from model import UNet, UNet06, WNet0404
 from torch.utils.data import DataLoader
 from utils import *
+import ast
 
 # Arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--path',       type=str,   default='./dataset',    
-    help="Dataset path")
-parser.add_argument('--model',      type=str,   default="UNet",         
-    help="Selects the model. Acceptable values: 'UNet', 'UNet06', 'WNet0404'")
-parser.add_argument('--validation_ratio', type=float, default=None,     
-    help="The ratio of validation dataset size to the whole dataset. If not set then there will be no validation and the whole dataset is used for training")
-parser.add_argument('--rotate',     type=bool,  default=True,           
-    help="Do rotate while training")
-parser.add_argument('--flip',       type=bool,  default=True,           
-    help="Do flip while training")
-parser.add_argument('--resize',     type=int,   default=None,           
-    help="The resize value for test images")
-parser.add_argument('--random_crops', type=int, default=0,              
-    help="Number of random crops for data augmentation")
-parser.add_argument('--batch_size', type=int,   default=8,              
-    help="The batch size for the training")
-parser.add_argument('--cuda',       type=int,   default=1,              
-    help="0 or 1, if 1 then the model uses gpu for the training")
-parser.add_argument('--lr',         type=float, default=0.001,          
-    help="The learning rate value")
-parser.add_argument('--weight_path', type=str,  default=None,           
-    help="The path to saved weights. if not specified there will be no weight loaded")
-parser.add_argument('--experiment_name', type=str, default="NotSpec",   
-    help="The name of the experiment")
-parser.add_argument('--train',      type=bool,  default=True,           
-    help="If true then training is done")
-parser.add_argument('--test',       type=bool,  default=True,           
-    help="If true then test is done")
-parser.add_argument('--epochs',     type=int,   default=100,            
-    help="Number of epoch")
-parser.add_argument('--save_weights', type=bool, default=False,         
-    help="If true then the weights are saved in each epoch")
-parser.add_argument('--loss',       type=str,   default="dice",         
-    help="Selects the loss type. the accepted values are 'dice', 'cross entropy' and 'dice + cross entropy'")
-parser.add_argument('--adversarial_bound', type=float, default=0,       
-    help="If non-zero then the training is done using adversarial attack, where epsilon is the given value")
+parser.add_argument('--path', type=str, default='./dataset',
+                    help="Dataset path")
+parser.add_argument('--model', type=str, default="UNet",
+                    help="Selects the model. Acceptable values: 'UNet', 'UNet06', 'WNet0404'")
+parser.add_argument('--validation_ratio', type=float, default=None,
+                    help="The ratio of validation dataset size to the whole dataset. If not set then there will be no validation and the whole dataset is used for training")
+parser.add_argument('--rotate', type=ast.literal_eval, default=True,
+                    help="Do rotate while training")
+parser.add_argument('--flip', type=ast.literal_eval, default=True,
+                    help="Do flip while training")
+parser.add_argument('--resize', type=int, default=None,
+                    help="The resize value for test images")
+parser.add_argument('--random_crops', type=int, default=0,
+                    help="Number of random crops for data augmentation")
+parser.add_argument('--batch_size', type=int, default=8,
+                    help="The batch size for the training")
+parser.add_argument('--cuda', type=ast.literal_eval, default=True,
+                    help="if True then the model uses gpu for the training")
+parser.add_argument('--lr', type=float, default=0.001,
+                    help="The learning rate value")
+parser.add_argument('--weight_path', type=str, default=None,
+                    help="The path to saved weights. if not specified there will be no weight loaded")
+parser.add_argument('--experiment_name', type=str, default="NotSpec",
+                    help="The name of the experiment")
+parser.add_argument('--train', type=ast.literal_eval, default=True,
+                    help="If true then training is done")
+parser.add_argument('--test', type=ast.literal_eval, default=True,
+                    help="If true then test is done")
+parser.add_argument('--epochs', type=int, default=100,
+                    help="Number of epoch")
+parser.add_argument('--save_weights', type=bool, default=False,
+                    help="If true then the weights are saved in each epoch")
+parser.add_argument('--loss', type=str, default="dice",
+                    help="Selects the loss type. the accepted values are 'dice', 'cross entropy' and 'dice + cross entropy'")
+parser.add_argument('--adversarial_bound', type=float, default=0,
+                    help="If non-zero then the training is done using adversarial attack, where epsilon is the given value")
 
 
 def main(args):
-
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
     train_dataset = dataset.TrainValSet(
-        path=args.path,set_type='train',
-        ratio=ratio,rotate=args.rotate,
+        path=args.path, set_type='train',
+        ratio=ratio, rotate=args.rotate,
         flip=args.flip,
         resize=args.resize,
         random_crops=args.random_crops,
-        )
+    )
     test_dataset = dataset.TestSet(path=args.path)
     train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False)
@@ -86,7 +86,7 @@ def main(args):
     # Loading state dict for weights and optimizer state
     if args.weight_path:
         load_model(model, optimizer, args)
-    
+
     # Scheduler initialization for reduction of learning rate during the training
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, min_lr=1e-7)
 
@@ -97,8 +97,6 @@ def main(args):
     # Loss function initialization
     if args.loss == 'dice':
         criterion = dice_loss
-    elif args.loss == 'dice_patches':
-        criterion = lambda output, mask: dice_loss(mask_to_patches(output), mask_to_patches(mask))
     elif args.loss == 'cross entropy':
         criterion = torch.nn.BCELoss(reduction='mean')
         criterion = criterion.cuda() if args.cuda else criterion
@@ -117,7 +115,7 @@ def main(args):
             train_f1 = []
             train_f1_patches = []
             for img, mask in train_loader:
-                
+
                 img = img.cuda().float() if args.cuda else img.float()
                 mask = mask.cuda() if args.cuda else mask
 
@@ -132,6 +130,7 @@ def main(args):
                     loss.backward()
                     img = fgsm_update(img, output, mask, update_max_norm=args.adversarial_bound)
 
+                # Backward propagation
                 output = model(img)
                 loss = criterion(output, mask)
                 loss.backward()
@@ -142,14 +141,15 @@ def main(args):
                 train_f1.append(f1_score)
                 train_f1_patches.append(f1_patches)
 
+            # Saving the loss and the scores of training for this epoch
             save_track(
                 experiment_path,
                 args,
                 train_loss=sum(train_loss) / len(train_loss),
                 train_f1=sum(train_f1) / len(train_f1),
                 train_f1_patch=sum(train_f1_patches) / len(train_f1_patches),
-                       )
-            
+            )
+
             # Validation
             if args.validation_ratio:
                 model.eval()
@@ -158,7 +158,6 @@ def main(args):
                 val_f1_patches = []
                 with torch.no_grad():
                     for img, mask in val_loader:
-                        
                         img = img.cuda().float() if args.cuda else img.float()
                         mask = mask.cuda() if args.cuda else mask
 
@@ -168,26 +167,30 @@ def main(args):
                         val_loss.append(loss.item())
                         val_f1.append(f1_score)
                         val_f1_patches.append(f1_patches)
-                
+
                 # Logging
                 val_loss_to_track = sum(val_loss) / len(val_loss)
                 val_f1_to_track = sum(val_f1) / len(val_f1)
-                val_f1_patches_to_track = sum(val_f1_patches) / len (val_f1_patches)
+                val_f1_patches_to_track = sum(val_f1_patches) / len(val_f1_patches)
                 print('Epoch : {} | Loss = {:.4f}, F1 Score = {:.4f}, F1 Patches Score: {:.4f}'.format(
                     epoch, val_loss_to_track, val_f1_to_track, val_f1_patches_to_track))
+
+                # Saving the loss and the scores of validation for this epoch
                 save_track(
                     experiment_path,
                     args,
                     val_loss=val_loss_to_track,
                     val_f1=val_f1_to_track,
                     val_f1_patch=val_f1_patches_to_track,
-                    )
+                )
+
+                # Reducing learning rate in case val_loss_to_track does not decrease based on the given patience
                 scheduler.step(val_loss_to_track)
             else:
                 print("Epoch : {} | No validation".format(epoch))
 
             # Saving the weights
-            if args.save_weights and (epoch % 10 == 9 or epoch == args.epochs - 1):
+            if args.save_weights:
                 save_model(model, optimizer, experiment_path, args)
 
     # Testing
@@ -199,9 +202,12 @@ def main(args):
             for i, img in enumerate(test_loader):
                 img = img.cuda().float() if args.cuda else img.float()
                 output = model(img)
+
+                # Saving the output masks
                 save_image(output, i + 1, results_path)
                 save_image_overlap(output, img, i + 1, results_path)
 
+        # Converting the saved masks to a submission file
         submission_filename = os.path.join(results_path, args.experiment_name + '.csv')
         image_filenames = []
         for i in range(1, 51):

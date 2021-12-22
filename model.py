@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from collections import OrderedDict
-from torchvision.models.resnet import BasicBlock, Bottleneck
 
 
 # Unet model inspired by https://github.com/mateuszbuda/brain-segmentation-pytorch
@@ -12,7 +11,7 @@ class UNet(nn.Module):
 
         block = UNet._block
         features = init_features
-        
+
         # Encoder side
         self.encoder1 = block(n_channels, features, name="enc1")
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -111,7 +110,7 @@ class UNet06(nn.Module):
 
         # Encoder side
         self.encoder1 = block(n_channels, features1, name="enc1")
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)        
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.encoder2 = block(features1, features2, name="enc2")
         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.encoder3 = block(features2, features3, name="enc3")
@@ -124,11 +123,11 @@ class UNet06(nn.Module):
 
         # Bottleneck
         self.bottleneck = block(features6, features6, name="bottleneck")
-        
+
         # Decoder side
-        self.decoder6 = block(features6 * 2, features6, name="dec6")  
+        self.decoder6 = block(features6 * 2, features6, name="dec6")
         self.upconv5 = nn.ConvTranspose2d(features6, features5, kernel_size=2, stride=2)
-        self.decoder5 = block(features5 * 2, features5, name="dec5")  
+        self.decoder5 = block(features5 * 2, features5, name="dec5")
         self.upconv4 = nn.ConvTranspose2d(features5, features4, kernel_size=2, stride=2)
         self.decoder4 = block(features4 * 2, features4, name="dec4")
         self.upconv3 = nn.ConvTranspose2d(features4, features3, kernel_size=2, stride=2)
@@ -149,7 +148,7 @@ class UNet06(nn.Module):
         enc5 = self.encoder5(self.pool4(enc4))
         enc6 = self.encoder6(self.pool5(enc5))
         bottleneck = self.bottleneck(enc6)
-        dec6 = bottleneck # no need  to upconv because pool6 keeps the size of the input
+        dec6 = bottleneck  # no need  to upconv because pool6 keeps the size of the input
         dec6 = torch.cat((dec6, enc6), dim=1)
         dec6 = self.decoder6(dec6)
         dec5 = self.upconv5(dec6)
@@ -211,7 +210,7 @@ class WNet0404(nn.Module):
 
         features = init_features
 
-        # First U
+        # First UNet
         self.encoder11 = WNet0404._block(n_channels, features, name="enc11")
         self.pool11 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.encoder12 = WNet0404._block(features, features * 2, name="enc12")
@@ -231,7 +230,7 @@ class WNet0404(nn.Module):
         self.decoder11 = WNet0404._block(features * 2, features, name="dec11")
         self.conv1 = nn.Conv2d(in_channels=features, out_channels=n_classes, kernel_size=1)
 
-        # Second U
+        # Second UNet
         self.encoder21 = WNet0404._block(n_classes, features, name="enc21")
         self.pool21 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.encoder22 = WNet0404._block(features, features * 2, name="enc22")
@@ -252,7 +251,6 @@ class WNet0404(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=features, out_channels=n_classes, kernel_size=1)
 
     def forward(self, x):
-
         # First U
         enc11 = self.encoder11(x)
         enc12 = self.encoder12(self.pool11(enc11))
@@ -310,7 +308,7 @@ class WNet0404(nn.Module):
                     ),
                     (name + "norm1", nn.BatchNorm2d(num_features=features)),
                     (name + "relu1", nn.ReLU(inplace=True)),
-                    
+
                     (
                         name + "conv2",
                         nn.Conv2d(
