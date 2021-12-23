@@ -5,7 +5,7 @@ This is a repository for the second project of the Machine Learning (CS-433) cou
 ![](images/img_033.png) ![](images/gt_033.png)
 
 ## Setup
-This setup requires a Default Unix Environment with an installed Pyhton 3.7 or Python 3.8. Use the following command to install all the required libraries:
+This setup requires a Default Unix Environment with an installed Python 3.7 or Python 3.8. Use the following command to install all the required libraries:
 ```bash
 pip install -r requirements.txt
 ```
@@ -60,17 +60,20 @@ python main.py --path ./dataset --weights_path "/.../weights.pt" --experiment "T
 
 ### Regenerating the final submission
 
-The results of the final AICrowd submission ([#168633](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation/submissions/168633)) is in `./experiments/Final_Submission`. The pre-trained weightes could not be included due to Github limitations. To train and predict using this model, please download the floder from [Google Drive](https://drive.google.com/drive/folders/1_ZoEnNRjN6OTn2d6arfJIbMQX4kv6Zwv?usp=sharing) and replace the folder on your local machine. To train and regenerate the same model and result, run the following command:
+The results of the final AICrowd submission ([#168633](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation/submissions/168633)) is in `./experiments/Final_Submission`. The pre-trained weightes could not be included due to Github limitations. To train and predict using this model, please download the folder from [Google Drive](https://drive.google.com/drive/folders/1_ZoEnNRjN6OTn2d6arfJIbMQX4kv6Zwv?usp=sharing) and replace the folder on your local machine.
+More precisely, the model file (`Final_Submission.pt`) needs to have the following path: `experiments/Final_Submission/Final_Submission.pt`.
+To train and regenerate a similar model and result, run the following command:
 ```bash
 python main.py --experiment "Final_Submission_Gen" --path ./dataset --model "UNet" --validation_ratio 0.2 --cuda True --loss 'dice' --epoch 70 --save_weights True
 ```
 - The predictions and the submission file will be saved in this directory: `./experiments/Final_Submission_Gen`.
 - If you don't have access to a GPU, set `--cuda False`.
+- **The model weights will not be exactly the same due to implementation differences across GPUs. However, the results should be similar. See below to reproduce the exact submitted file.**
 
 
 To get predictions of the trained model on the test dataset, run:
 ```bash
-python main.py --path ./dataset --cuda True --weights_path "./experiments/Final_Submission/Final_Submission.pt" --experiment "Final_Submission_Test" --train False
+python main.py --path ./dataset --cuda True --weight_path "./experiments/Final_Submission/Final_Submission.pt" --experiment "Final_Submission_Test" --train False --validation_ratio 0
 ```
 - Please make sure to replace the `Final_Submission` folder with the link provided above before running this command.
 - The predictions and the submission file will be saved in this directory: `./experiments/Final_Submission_Test`.
