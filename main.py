@@ -26,7 +26,7 @@ parser.add_argument('--random_crops', type=int, default=0,
 parser.add_argument('--batch_size', type=int, default=8,
                     help="The batch size for the training")
 parser.add_argument('--cuda', type=ast.literal_eval, default=True,
-                    help="if True then the model uses gpu for the training")
+                    help="If True then the model uses gpu for the training")
 parser.add_argument('--lr', type=float, default=0.001,
                     help="The learning rate value")
 parser.add_argument('--weight_path', type=str, default=None,
@@ -233,7 +233,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.cuda:
         if not torch.cuda.is_available():
-            raise Exception("GPU not available. Set --cuda 0 to run with CPU.")
+            raise Exception("GPU not available. Set --cuda False to run with CPU.")
     if args.validation_ratio > 0.8 or args.validation_ratio < 0:
         raise Exception("Validation ratio is not acceptable. Please eneter a value between 0 and 0.8.")
     if args.model not in ('UNet', 'UNet06', 'WNet0404'):
