@@ -60,7 +60,7 @@ python main.py --path ./dataset --weights_path "/.../weights.pt" --experiment "T
 
 ### Regenerating the final submission
 
-The results of the final AICrowd submission ([#168633](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation/submissions/168633)) is in `./experiments/Final_Submission`. The pre-trained weightes could not be included due to github limitations. To train and predict using this model, please download the floder from [Google drive](https://drive.google.com/drive/folders/1_ZoEnNRjN6OTn2d6arfJIbMQX4kv6Zwv?usp=sharing) and replace the folder on your local machine. To train and regenerate the same model and result, run the following command:
+The results of the final AICrowd submission ([#168633](https://www.aicrowd.com/challenges/epfl-ml-road-segmentation/submissions/168633)) is in `./experiments/Final_Submission`. The pre-trained weightes could not be included due to Github limitations. To train and predict using this model, please download the floder from [Google Drive](https://drive.google.com/drive/folders/1_ZoEnNRjN6OTn2d6arfJIbMQX4kv6Zwv?usp=sharing) and replace the folder on your local machine. To train and regenerate the same model and result, run the following command:
 ```bash
 python main.py --experiment "Final_Submission_Gen" --path ./dataset --model "UNet" --validation_ratio 0.2 --cuda True --loss 'dice' --epoch 70 --save_weights True
 ```
