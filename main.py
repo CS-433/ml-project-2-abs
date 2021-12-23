@@ -49,7 +49,11 @@ parser.add_argument('--adversarial_bound', type=float, default=0,
 
 def main(args):
     # Ensure reproducibility
-    random.seed(42)
+    seed = 42
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
 
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
