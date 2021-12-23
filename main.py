@@ -1,4 +1,6 @@
 import argparse
+import random
+
 import dataset
 from model import UNet, UNet06, WNet0404
 from torch.utils.data import DataLoader
@@ -46,6 +48,9 @@ parser.add_argument('--adversarial_bound', type=float, default=0,
 
 
 def main(args):
+    # Ensure reproducibility
+    random.seed(42)
+
     # Dataset initialization
     ratio = args.validation_ratio if args.validation_ratio else 0
     train_dataset = dataset.TrainValSet(
